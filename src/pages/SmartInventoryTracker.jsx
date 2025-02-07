@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { apiCall } from './api';
+import { useState, useEffect } from 'react';
+import { apiCall } from './services/api';
 import './SmartInventoryTracker.css';
 
 const SmartInventoryTracker = () => {
