@@ -9,6 +9,7 @@ const SmartInventoryTracker = () => {
     expiration_date: '',
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [notificationStatus, setNotificationStatus] = useState('');
 
   // Fetch all groceries on initial load
   useEffect(() => {
@@ -53,17 +54,25 @@ const SmartInventoryTracker = () => {
   };
 
   // Check for Expiring/Expired Items
-  const checkExpiration = () => {
-    const currentDate = new Date();
-    return groceries.filter((grocery) => {
-      const expirationDate = new Date(grocery.expiration_date);
-      return expirationDate <= currentDate;
-    });
+  const checkExpiration = async () => {
+    try {
+      const expiringItems = await apiCall("/groceries/check-expirations");
+      return expiringItems; // The backend will return a list of expiring/expired items
+    } catch (error) {
+      console.error("Error fetching expiring items:", error);
+      return [];
+    }
   };
 
-  // Send Notifications (Mock)
-  const sendNotification = (expiringItems) => {
-    alert(`These items are expiring soon: ${expiringItems.map(item => item.name).join(", ")}`);
+  // Send Notifications for Expiring Items
+  const sendNotification = async () => {
+    const expiringItems = await checkExpiration();
+    if (expiringItems.length > 0) {
+      // Notify the user about expiring items
+      setNotificationStatus(`These items are expiring soon: ${expiringItems.map(item => item.name).join(", ")}`);
+    } else {
+      setNotificationStatus("No items are expiring soon.");
+    }
   };
 
   // Handle Search by Name
@@ -75,7 +84,7 @@ const SmartInventoryTracker = () => {
   // Handle Get Grocery by ID
   const getGroceryById = async (id) => {
     const data = await apiCall(`/groceries/${id}`);
-    console.log(data.grocery); // or handle it however you need
+    console.log(data.grocery); // Handle the grocery data however you need
   };
 
   // Handle Get All Groceries with Filters
@@ -133,9 +142,8 @@ const SmartInventoryTracker = () => {
       </ul>
 
       {/* Expiration Check */}
-      <button onClick={() => sendNotification(checkExpiration())}>
-        Check Expiring Items
-      </button>
+      <button onClick={sendNotification}>Check Expiring Items</button>
+      {notificationStatus && <p>{notificationStatus}</p>}
 
       {/* Filters */}
       <button onClick={() => getFilteredGroceries({ expiration_date: "2025-02-05" })}>Filter by Expiry Date</button>
