@@ -9,7 +9,6 @@ const SmartInventoryTracker = () => {
     expiration_date: '',
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [notificationStatus, setNotificationStatus] = useState('');
 
   // Fetch all groceries on initial load
   useEffect(() => {
@@ -56,22 +55,9 @@ const SmartInventoryTracker = () => {
   // Check for Expiring/Expired Items
   const checkExpiration = async () => {
     try {
-      const expiringItems = await apiCall("/groceries/check-expirations");
-      return expiringItems; // The backend will return a list of expiring/expired items
+      await apiCall("/groceries/check-expirations"); 
     } catch (error) {
       console.error("Error fetching expiring items:", error);
-      return [];
-    }
-  };
-
-  // Send Notifications for Expiring Items
-  const sendNotification = async () => {
-    const expiringItems = await checkExpiration();
-    if (expiringItems.length > 0) {
-      // Notify the user about expiring items
-      setNotificationStatus(`These items are expiring soon: ${expiringItems.map(item => item.name).join(", ")}`);
-    } else {
-      setNotificationStatus("No items are expiring soon.");
     }
   };
 
@@ -142,8 +128,7 @@ const SmartInventoryTracker = () => {
       </ul>
 
       {/* Expiration Check */}
-      <button onClick={sendNotification}>Check Expiring Items</button>
-      {notificationStatus && <p>{notificationStatus}</p>}
+      <button onClick={checkExpiration}>Check Expiring Items</button>
 
       {/* Filters */}
       <button onClick={() => getFilteredGroceries({ expiration_date: "2025-02-05" })}>Filter by Expiry Date</button>

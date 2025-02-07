@@ -1,17 +1,17 @@
 const BASE_URL = 'https://pantrypal-backend.onrender.com';
 
-export const apiCall = async (url, options = {}) => {
-  const token = localStorage.getItem('token'); 
-
+export const apiCall = async (url, options = {}, token = '') => {
+  // Create headers object
   const headers = {
-    ...options.headers,
-    ...(token && { Authorization: `Bearer ${token}` }), 
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+    ...options.headers, 
   };
 
   try {
     const response = await fetch(`${BASE_URL}${url}`, {
       ...options,
-      headers,
+      headers, // Use the headers created above
     });
 
     if (!response.ok) {
