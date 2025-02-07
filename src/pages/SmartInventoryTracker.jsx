@@ -1,144 +1,116 @@
-import { useEffect, useState } from "react";
-import { apiCall } from "../services/api"; 
+import React, { useState, useEffect } from 'react';
+import { apiCall } from './api';
+import './SmartInventoryTracker.css';
 
 const SmartInventoryTracker = () => {
   const [groceries, setGroceries] = useState([]);
-  const [newGrocery, setNewGrocery] = useState({
-    name: '',
-    quantity: '',
-    expiration_date: '',
-  });
-  const [searchQuery, setSearchQuery] = useState('');
+  const [name, setName] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [expirationDate, setExpirationDate] = useState('');
+  const [error, setError] = useState('');
 
-  // Fetch all groceries on initial load
+  // Fetch groceries from the backend
   useEffect(() => {
     const fetchGroceries = async () => {
-      const data = await apiCall("/groceries");
-      setGroceries(data.groceries);
+      try {
+        const data = await apiCall('/groceries');
+        setGroceries(data.groceries);
+      } catch (err) {
+        setError('Failed to fetch groceries.');
+      }
     };
-
     fetchGroceries();
   }, []);
 
-  // Handle Create
-  const handleSubmit = async (e) => {
+  // Add a new grocery item
+  const handleAddGrocery = async (e) => {
     e.preventDefault();
-    await apiCall("/groceries", {
-      method: "POST",
-      body: JSON.stringify(newGrocery),
-      headers: { "Content-Type": "application/json" },
-    });
-    setNewGrocery({ name: '', quantity: '', expiration_date: '' });
-    const data = await apiCall("/groceries");
-    setGroceries(data.groceries);
+    const newGrocery = {
+      name,
+      quantity,
+      expiration_date: expirationDate,
+    };
+
+    try {
+      await apiCall('/groceries', {
+        method: 'POST',
+        body: JSON.stringify(newGrocery),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      setGroceries((prev) => [...prev, newGrocery]);
+      setName('');
+      setQuantity('');
+      setExpirationDate('');
+    } catch (err) {
+      setError('Failed to add grocery item.');
+    }
   };
 
-  // Handle Update
-  const handleUpdate = async (id) => {
-    await apiCall(`/groceries/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(newGrocery),
-      headers: { "Content-Type": "application/json" },
-    });
-    const data = await apiCall("/groceries");
-    setGroceries(data.groceries);
-    setNewGrocery({ name: '', quantity: '', expiration_date: '' });
+  // Delete a grocery item
+  const handleDeleteGrocery = async (id) => {
+    try {
+      await apiCall(`/groceries/${id}`, { method: 'DELETE' });
+      setGroceries((prev) => prev.filter((item) => item.id !== id));
+    } catch (err) {
+      setError('Failed to delete grocery item.');
+    }
   };
 
-  // Handle Delete
-  const handleDelete = async (id) => {
-    await apiCall(`/groceries/${id}`, { method: "DELETE" });
-    const data = await apiCall("/groceries");
-    setGroceries(data.groceries);
-  };
-
-  // Check for Expiring/Expired Items
-  const checkExpiration = () => {
-    const currentDate = new Date();
-    return groceries.filter((grocery) => {
-      const expirationDate = new Date(grocery.expiration_date);
-      return expirationDate <= currentDate;
-    });
-  };
-
-  // Send Notifications (Mock)
-  const sendNotification = (expiringItems) => {
-    alert(`These items are expiring soon: ${expiringItems.map(item => item.name).join(", ")}`);
-  };
-
-  // Handle Search by Name
-  const handleSearch = async () => {
-    const data = await apiCall(`/groceries/search?name=${searchQuery}`);
-    setGroceries(data.groceries);
-  };
-
-  // Handle Get Grocery by ID
-  const getGroceryById = async (id) => {
-    const data = await apiCall(`/groceries/${id}`);
-    console.log(data.grocery); // or handle it however you need
-  };
-
-  // Handle Get All Groceries with Filters
-  const getFilteredGroceries = async (filterParams) => {
-    const queryParams = new URLSearchParams(filterParams).toString();
-    const data = await apiCall(`/groceries?${queryParams}`);
-    setGroceries(data.groceries);
+  // Update a grocery item
+  const handleUpdateGrocery = async (id) => {
+    const updatedGrocery = { name, quantity, expiration_date: expirationDate };
+    try {
+      await apiCall(`/groceries/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updatedGrocery),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      setGroceries((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, ...updatedGrocery } : item
+        )
+      );
+      setName('');
+      setQuantity('');
+      setExpirationDate('');
+    } catch (err) {
+      setError('Failed to update grocery item.');
+    }
   };
 
   return (
     <div>
-      <h1>Smart Inventory Tracker</h1>
-
-      {/* Search */}
-      <input
-        type="text"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search by name"
-      />
-      <button onClick={handleSearch}>Search</button>
-
-      {/* Form for Creating/Updating Grocery Item */}
-      <form onSubmit={handleSubmit}>
+      <h2>Smart Inventory Tracker</h2>
+      {error && <p>{error}</p>}
+      <form onSubmit={handleAddGrocery}>
         <input
           type="text"
-          placeholder="Grocery Name"
-          value={newGrocery.name}
-          onChange={(e) => setNewGrocery({ ...newGrocery, name: e.target.value })}
+          placeholder="Item Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
         <input
-          type="text"
+          type="number"
           placeholder="Quantity"
-          value={newGrocery.quantity}
-          onChange={(e) => setNewGrocery({ ...newGrocery, quantity: e.target.value })}
+          value={quantity}
+          onChange={(e) => setQuantity(e.target.value)}
         />
         <input
           type="date"
-          value={newGrocery.expiration_date}
-          onChange={(e) => setNewGrocery({ ...newGrocery, expiration_date: e.target.value })}
+          value={expirationDate}
+          onChange={(e) => setExpirationDate(e.target.value)}
         />
         <button type="submit">Add Grocery</button>
       </form>
-
-      {/* Display Groceries List */}
       <ul>
         {groceries.map((grocery) => (
           <li key={grocery.id}>
-            {grocery.name} - {grocery.quantity} - Expires on: {grocery.expiration_date}
-            <button onClick={() => handleDelete(grocery.id)}>Delete</button>
-            <button onClick={() => handleUpdate(grocery.id)}>Update</button>
-            <button onClick={() => getGroceryById(grocery.id)}>View Details</button>
+            <span>{grocery.name} - {grocery.quantity} - {grocery.expiration_date}</span>
+            <button onClick={() => handleUpdateGrocery(grocery.id)}>Update</button>
+            <button onClick={() => handleDeleteGrocery(grocery.id)}>Delete</button>
           </li>
         ))}
       </ul>
-
-      {/* Expiration Check */}
-      <button onClick={() => sendNotification(checkExpiration())}>
-        Check Expiring Items
-      </button>
-
-      {/* Filters */}
-      <button onClick={() => getFilteredGroceries({ expiration_date: "2025-02-05" })}>Filter by Expiry Date</button>
     </div>
   );
 };

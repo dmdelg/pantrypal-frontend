@@ -4,6 +4,14 @@ import PropTypes from 'prop-types';
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [loading, setLoading] = useState(true); 
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
+    }
+    setLoading(false); 
+  }, []);
 
   useEffect(() => {
     if (token) {
@@ -19,8 +27,12 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setToken(null);
-    localStorage.removeItem("token"); 
-  };  
+    localStorage.removeItem('token'); 
+  };
+
+  if (loading) {
+    return <div>Loading...</div>; 
+  }
 
   return (
     <authContext.Provider value={{ token, login, logout }}>
