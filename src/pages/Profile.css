@@ -1,0 +1,22 @@
+.profile-links a {
+    color: #E195AB;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  
+  .profile-links a:hover {
+    color: #DE3163;
+  }
+  
+  .profile-links li {
+    display: list-item;
+    margin-bottom: 10px;
+  }
+  
+  .profile-links {
+    list-style-type: none;
+    padding-left: 0;
+    padding: 10px;
+    border-radius: 5px;
+  }
+  

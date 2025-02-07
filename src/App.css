@@ -1,0 +1,19 @@
+ul {
+  list-style: none;
+  display: flex;
+  gap: 15px;
+}
+
+li {
+  display: inline;
+}
+
+a {
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+}
+
+a:hover {
+  color: #E195AB;
+}
