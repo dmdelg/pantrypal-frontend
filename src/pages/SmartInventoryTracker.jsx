@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { apiCall } from '../services/api';
-import './SmartInventoryTracker.css';
 
 const SmartInventoryTracker = () => {
   const [groceries, setGroceries] = useState([]);
