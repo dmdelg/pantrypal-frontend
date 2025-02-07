@@ -50,7 +50,7 @@ const SmartInventoryTracker = () => {
 
   // Handle Delete
   const handleDelete = async (id) => {
-    await apiCall(`/groceries/${id}`, { method: "DELETE" }, token); // Pass the token
+    await apiCall(`/groceries/${id}`, { method: "DELETE" }, token);
     const data = await apiCall("/groceries", {}, token);
     setGroceries(data.groceries);
   };
@@ -58,7 +58,7 @@ const SmartInventoryTracker = () => {
   // Check for Expiring/Expired Items
   const checkExpiration = async () => {
     try {
-      await apiCall("/groceries/check-expirations", {}, token); // Pass the token
+      await apiCall("/groceries/check-expirations", {}, token); 
     } catch (error) {
       console.error("Error fetching expiring items:", error);
     }
@@ -66,7 +66,7 @@ const SmartInventoryTracker = () => {
 
   // Handle Search by Name
   const handleSearch = async () => {
-    const data = await apiCall(`/groceries/search?name=${searchQuery}`, {}, token); // Pass the token
+    const data = await apiCall(`/groceries/search?name=${searchQuery}`, {}, token); 
     setGroceries(data.groceries);
   };
 
