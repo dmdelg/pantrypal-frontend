@@ -11,7 +11,8 @@ export const apiCall = async (url, options = {}, token = '') => {
   try {
     const response = await fetch(`${BASE_URL}${url}`, {
       ...options,
-      headers, // Use the headers created above
+      headers,
+      credentials: 'include',
     });
 
     if (!response.ok) {
