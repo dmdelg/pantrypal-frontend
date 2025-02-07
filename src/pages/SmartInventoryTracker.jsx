@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiCall } from "../services/api"; 
-import { useAuth } from "../services/AuthContext"; // Import useAuth hook
+import { useAuth } from "../context/AuthContext"; // 
 
 const SmartInventoryTracker = () => {
   const { token } = useAuth(); // Get the token from the context
