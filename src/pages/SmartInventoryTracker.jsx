@@ -16,7 +16,7 @@ const SmartInventoryTracker = () => {
   // Fetch all groceries on initial load
   useEffect(() => {
     const fetchGroceries = async () => {
-      const data = await apiCall("/groceries", {}, token); // Pass the token for authorization
+      const data = await apiCall("/groceries/", {}, token); // Pass the token for authorization
       setGroceries(data.groceries);
     };
 
@@ -26,13 +26,13 @@ const SmartInventoryTracker = () => {
   // Handle Create
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await apiCall("/groceries", {
+    await apiCall("/groceries/", {
       method: "POST",
       body: JSON.stringify(newGrocery),
       headers: { "Content-Type": "application/json" },
     }, token); // Pass the token
     setNewGrocery({ name: '', quantity: '', expiration_date: '' });
-    const data = await apiCall("/groceries", {}, token);
+    const data = await apiCall("/groceries/", {}, token);
     setGroceries(data.groceries);
   };
 
@@ -43,7 +43,7 @@ const SmartInventoryTracker = () => {
       body: JSON.stringify(newGrocery),
       headers: { "Content-Type": "application/json" },
     }, token); // Pass the token
-    const data = await apiCall("/groceries", {}, token);
+    const data = await apiCall("/groceries/", {}, token);
     setGroceries(data.groceries);
     setNewGrocery({ name: '', quantity: '', expiration_date: '' });
   };
@@ -51,7 +51,7 @@ const SmartInventoryTracker = () => {
   // Handle Delete
   const handleDelete = async (id) => {
     await apiCall(`/groceries/${id}`, { method: "DELETE" }, token);
-    const data = await apiCall("/groceries", {}, token);
+    const data = await apiCall("/groceries/", {}, token);
     setGroceries(data.groceries);
   };
 
