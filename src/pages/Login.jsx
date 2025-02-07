@@ -9,20 +9,21 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate(); 
 
+  // If already logged in, redirect to profile page
   useEffect(() => {
     if (token) {
-      navigate('/profile'); 
+      navigate('/profile');  // Redirect to profile if already logged in
     }
   }, [token, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     const loginData = {
       email,
       password,
     };
-  
+
     try {
       const response = await fetch('https://pantrypal-backend.onrender.com/auth/login', {
         method: 'POST',
@@ -31,17 +32,12 @@ const Login = () => {
         },
         body: JSON.stringify(loginData),
       });
-  
-      // Check if the response status is OK (200)
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-  
+
       const data = await response.json();
       
       if (data.token) {
         login(data.token);
-        navigate('/profile');  // Redirect to profile after successful login
+        navigate('/profile');
       } else {
         setError('No token received. Please try again.');
       }
@@ -49,7 +45,7 @@ const Login = () => {
       console.error('Error during login:', err);
       setError(err.message || 'An error occurred');
     }
-  };  
+  };
 
   return (
     <div>
