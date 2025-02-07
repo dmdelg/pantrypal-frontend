@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { apiCall } from "../services/api"; 
+import { useAuth } from "../services/AuthContext"; // Import useAuth hook
 
 const SmartInventoryTracker = () => {
+  const { token } = useAuth(); // Get the token from the context
   const [groceries, setGroceries] = useState([]);
   const [newGrocery, setNewGrocery] = useState({
     name: '',
@@ -9,16 +11,17 @@ const SmartInventoryTracker = () => {
     expiration_date: '',
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
 
   // Fetch all groceries on initial load
   useEffect(() => {
     const fetchGroceries = async () => {
-      const data = await apiCall("/groceries");
+      const data = await apiCall("/groceries", {}, token); // Pass the token for authorization
       setGroceries(data.groceries);
     };
 
     fetchGroceries();
-  }, []);
+  }, [token]);
 
   // Handle Create
   const handleSubmit = async (e) => {
@@ -27,9 +30,9 @@ const SmartInventoryTracker = () => {
       method: "POST",
       body: JSON.stringify(newGrocery),
       headers: { "Content-Type": "application/json" },
-    });
+    }, token); // Pass the token
     setNewGrocery({ name: '', quantity: '', expiration_date: '' });
-    const data = await apiCall("/groceries");
+    const data = await apiCall("/groceries", {}, token);
     setGroceries(data.groceries);
   };
 
@@ -39,23 +42,23 @@ const SmartInventoryTracker = () => {
       method: "PUT",
       body: JSON.stringify(newGrocery),
       headers: { "Content-Type": "application/json" },
-    });
-    const data = await apiCall("/groceries");
+    }, token); // Pass the token
+    const data = await apiCall("/groceries", {}, token);
     setGroceries(data.groceries);
     setNewGrocery({ name: '', quantity: '', expiration_date: '' });
   };
 
   // Handle Delete
   const handleDelete = async (id) => {
-    await apiCall(`/groceries/${id}`, { method: "DELETE" });
-    const data = await apiCall("/groceries");
+    await apiCall(`/groceries/${id}`, { method: "DELETE" }, token); // Pass the token
+    const data = await apiCall("/groceries", {}, token);
     setGroceries(data.groceries);
   };
 
   // Check for Expiring/Expired Items
   const checkExpiration = async () => {
     try {
-      await apiCall("/groceries/check-expirations"); 
+      await apiCall("/groceries/check-expirations", {}, token); // Pass the token
     } catch (error) {
       console.error("Error fetching expiring items:", error);
     }
@@ -63,21 +66,27 @@ const SmartInventoryTracker = () => {
 
   // Handle Search by Name
   const handleSearch = async () => {
-    const data = await apiCall(`/groceries/search?name=${searchQuery}`);
+    const data = await apiCall(`/groceries/search?name=${searchQuery}`, {}, token); // Pass the token
     setGroceries(data.groceries);
   };
 
   // Handle Get Grocery by ID
   const getGroceryById = async (id) => {
-    const data = await apiCall(`/groceries/${id}`);
-    console.log(data.grocery); // Handle the grocery data however you need
+    const data = await apiCall(`/groceries/${id}`, {}, token); 
+    console.log(data.grocery);
   };
 
   // Handle Get All Groceries with Filters
   const getFilteredGroceries = async (filterParams) => {
     const queryParams = new URLSearchParams(filterParams).toString();
-    const data = await apiCall(`/groceries?${queryParams}`);
+    const data = await apiCall(`/groceries?${queryParams}`, {}, token); 
     setGroceries(data.groceries);
+  };
+
+  // Filter by Today's Expiry Date
+  const filterByToday = () => {
+    const today = new Date().toISOString().split('T')[0]; 
+    getFilteredGroceries({ expiration_date: today });
   };
 
   return (
@@ -130,8 +139,18 @@ const SmartInventoryTracker = () => {
       {/* Expiration Check */}
       <button onClick={checkExpiration}>Check Expiring Items</button>
 
-      {/* Filters */}
-      <button onClick={() => getFilteredGroceries({ expiration_date: "2025-02-05" })}>Filter by Expiry Date</button>
+      {/* Filter by Today's Expiry Date */}
+      <button onClick={filterByToday}>Filter by Expiration Date</button>
+
+      {/* Filter by Custom Date */}
+      <input
+        type="date"
+        value={selectedDate}
+        onChange={(e) => setSelectedDate(e.target.value)}
+      />
+      <button onClick={() => getFilteredGroceries({ expiration_date: selectedDate })}>
+        Filter by Selected Expiry Date
+      </button>
     </div>
   );
 };
