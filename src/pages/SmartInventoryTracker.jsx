@@ -30,33 +30,57 @@ const SmartInventoryTracker = () => {
     return format(new Date(dateString), 'MM-dd-yyyy');
   };
 
-  // Create a new grocery
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log("Creating grocery:", newGrocery);
-    await apiCall("/groceries/", {
-      method: "POST",
-      body: JSON.stringify({ ...newGrocery, expiration_date: newGrocery.expiration_date }),
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+  
+    // Create the grocery item to be added
+    const newItem = {
+      name: newGrocery.name,
+      quantity: newGrocery.quantity,
+      expiration_date: newGrocery.expiration_date,
+    };
+  
+    // Add the grocery item to the backend (assuming an API call)
+    const response = await fetch('your-api-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    }, token);
-    setNewGrocery({ name: '', quantity: '', expiration_date: '' });
-    fetchGroceries(); // Refresh groceries after creation
-  };
+      body: JSON.stringify(newItem),
+    });
+  
+    if (response.ok) {
+      // If the item is successfully added, update the state with the new grocery
+      const addedGrocery = await response.json();
+      setGroceries((prevGroceries) => [...prevGroceries, addedGrocery]); // Use functional update here
+  
+      // Optionally, reset the form fields
+      setNewGrocery({
+        name: '',
+        quantity: '',
+        expiration_date: '',
+      });
+    } else {
+      // Handle error if the item is not added
+      console.error('Failed to add grocery item');
+    }
+  };  
 
-  // Update an existing grocery
-  const handleUpdate = async (id) => {
-    console.log("Updating grocery id:", id, "with data:", updateGrocery);
-    await apiCall(`/groceries/${id}`, {
-      method: "PUT",
-      body: JSON.stringify({ ...updateGrocery, expiration_date: updateGrocery.expiration_date }),
-      headers: { "Content-Type": "application/json" },
-    }, token);
-    setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' });
-    fetchGroceries(); // Refresh groceries after update
-  };
+// Update an existing grocery
+const handleUpdate = async (id) => {
+  console.log("Updating grocery id:", id, "with data:", updateGrocery);
+  
+  // Format the expiration date to MM-dd-yyyy
+  const formattedExpirationDate = format(new Date(updateGrocery.expiration_date), 'MM-dd-yyyy');
+  
+  await apiCall(`/groceries/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ ...updateGrocery, expiration_date: formattedExpirationDate }),
+    headers: { "Content-Type": "application/json" },
+  }, token);
+  setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' });
+  fetchGroceries(); // Refresh groceries after update
+};
 
   // Delete a grocery
   const handleDelete = async (id) => {
@@ -103,16 +127,17 @@ const SmartInventoryTracker = () => {
     setFilteredGroceries(sorted);
   };
 
-  // Filter groceries by today (expiration date)
   const handleFilterToday = () => {
     const today = format(new Date(), 'MM-dd-yyyy');
     const filtered = groceries.filter((grocery) => formatDate(grocery.expiration_date) === today);
     setFilteredGroceries(filtered);
+    setFilterByToday(true);  
   };
-
-  // Reset filter to show all groceries
+  
+  // And when resetting the filter
   const handleResetFilter = () => {
     setFilteredGroceries(groceries);
+    setFilterByToday(false);  
   };
 
   return (
