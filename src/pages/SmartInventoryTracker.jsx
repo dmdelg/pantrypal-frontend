@@ -37,14 +37,15 @@ const SmartInventoryTracker = () => {
       expiration_date: newGrocery.expiration_date,
     };
   
-    // Add the grocery item to the backend (assuming an API call)
-    const response = await fetch('your-api-url', {
+    const response = await fetch('/groceries', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,  // Assuming you are passing the token for authentication
       },
       body: JSON.stringify(newItem),
     });
+    
   
     if (response.ok) {
       // If the item is successfully added, update the state with the new grocery
@@ -74,20 +75,28 @@ const SmartInventoryTracker = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,  // Including token for auth
         },
         body: JSON.stringify({
           ...updateGrocery,
-          expiration_date: formattedExpirationDate,  // Send the formatted expiration date
+          expiration_date: formattedExpirationDate,
         }),
       });
+      
+      if (response.ok) {
+        // Assuming the backend responds with the updated grocery item
+        const updatedGrocery = await response.json(); 
   
-      if (!response.ok) {
-        throw new Error(`Failed to update grocery. Status: ${response.status}`);
+        // Update the UI with the new expiration date
+        const updatedGroceryList = groceries.map(grocery =>
+          grocery.id === updatedGrocery.id ? updatedGrocery : grocery
+        );
+  
+        setGroceries(updatedGroceryList); // Update the groceries list in the frontend
+      } else {
+        const errorMessage = await response.text();
+        console.error("Error:", errorMessage);
       }
-  
-      // If successful, fetch updated groceries and reset the form
-      await fetchGroceries();
-      setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' });
     } catch (error) {
       console.error("Error updating grocery:", error);
     }
