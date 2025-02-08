@@ -10,8 +10,8 @@ const SmartInventoryTracker = () => {
   const [newGrocery, setNewGrocery] = useState({ name: '', quantity: '', expiration_date: '' });
   const [updateGrocery, setUpdateGrocery] = useState({ id: null, name: '', quantity: '', expiration_date: '' });
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
-  const [filterBy, setFilterBy] = useState('all'); // 'name', 'quantity', 'expiration_date', 'all'
+  const [sortOption, setSortOption] = useState('none');
+  const [filterByToday, setFilterByToday] = useState(false);
 
   // Fetch groceries and set both the full list and the filtered list
   const fetchGroceries = useCallback(async () => {
@@ -35,11 +35,11 @@ const SmartInventoryTracker = () => {
     console.log("Creating grocery:", newGrocery);
     await apiCall("/groceries/", {
       method: "POST",
-      body: JSON.stringify({ ...newGrocery, expiration_date: newGrocery.expiration_date }), // Send as YYYY-MM-DD
+      body: JSON.stringify({ ...newGrocery, expiration_date: newGrocery.expiration_date }),
       headers: { "Content-Type": "application/json" },
     }, token);
     setNewGrocery({ name: '', quantity: '', expiration_date: '' });
-    fetchGroceries();
+    fetchGroceries(); // Refresh groceries after creation
   };
 
   // Update an existing grocery
@@ -51,47 +51,88 @@ const SmartInventoryTracker = () => {
       headers: { "Content-Type": "application/json" },
     }, token);
     setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' });
-    fetchGroceries();
+    fetchGroceries(); // Refresh groceries after update
   };
 
   // Delete a grocery
   const handleDelete = async (id) => {
     await apiCall(`/groceries/${id}`, { method: "DELETE" }, token);
-    fetchGroceries();
+    fetchGroceries(); // Refresh groceries after deletion
   };
 
-  // Filter groceries on the front-end
-  const handleFilter = () => {
-    let filtered = [...groceries]; // Start with a copy of the full grocery list
-
-    if (filterBy === 'name' && searchQuery) {
+  // Handle Search
+  const handleSearch = () => {
+    let filtered = [...groceries];
+    if (searchQuery) {
       filtered = filtered.filter((grocery) =>
         grocery.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
+    setFilteredGroceries(filtered);
+  };
 
-    if (filterBy === 'quantity' && searchQuery) {
-      filtered = filtered.filter((grocery) => grocery.quantity.includes(searchQuery));
+  // Sort groceries based on selected sort option
+  const handleSort = (option) => {
+    let sorted = [...filteredGroceries];
+    switch (option) {
+      case 'name_asc':
+        sorted.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'name_desc':
+        sorted.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case 'quantity':
+        sorted.sort((a, b) => a.quantity - b.quantity);
+        break;
+      case 'expiration_date':
+        sorted.sort((a, b) => new Date(a.expiration_date) - new Date(b.expiration_date));
+        break;
+      default:
+        break;
     }
+    setFilteredGroceries(sorted);
+  };
 
-    if (filterBy === 'expiration_date' && selectedDate) {
-      filtered = filtered.filter((grocery) =>
-        formatDate(grocery.expiration_date) === format(new Date(selectedDate), 'MM-dd-yyyy')
-      );
-    }
+  // Filter groceries by today (expiration date)
+  const handleFilterToday = () => {
+    const today = format(new Date(), 'MM-dd-yyyy');
+    const filtered = groceries.filter((grocery) => formatDate(grocery.expiration_date) === today);
+    setFilteredGroceries(filtered);
+  };
 
-    if (filterBy === 'today') {
-      filtered = filtered.filter((grocery) =>
-        formatDate(grocery.expiration_date) === format(new Date(), 'MM-dd-yyyy')
-      );
-    }
-
-    setFilteredGroceries(filtered); // Update the filtered list
+  // Reset filter to show all groceries
+  const handleResetFilter = () => {
+    setFilteredGroceries(groceries);
   };
 
   return (
     <div>
       <h1>Smart Inventory Tracker</h1>
+
+      {/* Create Grocery Form */}
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          value={newGrocery.name}
+          onChange={(e) => setNewGrocery({ ...newGrocery, name: e.target.value })}
+          placeholder="Name"
+          required
+        />
+        <input
+          type="text"
+          value={newGrocery.quantity}
+          onChange={(e) => setNewGrocery({ ...newGrocery, quantity: e.target.value })}
+          placeholder="Quantity"
+          required
+        />
+        <input
+          type="date"
+          value={newGrocery.expiration_date}
+          onChange={(e) => setNewGrocery({ ...newGrocery, expiration_date: e.target.value })}
+          required
+        />
+        <button type="submit">Add Grocery</button>
+      </form>
 
       {/* Search Section */}
       <input
@@ -100,26 +141,20 @@ const SmartInventoryTracker = () => {
         onChange={(e) => setSearchQuery(e.target.value)}
         placeholder="Search by name"
       />
+      <button onClick={handleSearch}>Search</button>
 
-      {/* Filter Dropdown */}
-      <select onChange={(e) => setFilterBy(e.target.value)} value={filterBy}>
-        <option value="all">All Groceries</option>
-        <option value="name">Filter by Name</option>
-        <option value="quantity">Filter by Quantity</option>
-        <option value="expiration_date">Filter by Expiration Date</option>
-        <option value="today">Filter by Expiring Today</option>
+      {/* Sorting Dropdown */}
+      <select onChange={(e) => { handleSort(e.target.value); setSortOption(e.target.value); }} value={sortOption}>
+        <option value="none">Sort By</option>
+        <option value="name_asc">Name (A-Z)</option>
+        <option value="name_desc">Name (Z-A)</option>
+        <option value="quantity">Quantity</option>
+        <option value="expiration_date">Expiration Date</option>
       </select>
 
-      {/* Date Picker for Expiration Date Filter */}
-      {filterBy === 'expiration_date' && (
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-        />
-      )}
-
-      <button onClick={handleFilter}>Apply Filter</button>
+      {/* Buttons to filter by today's expiration and see all groceries */}
+      <button onClick={handleFilterToday}>Show Expiring Today</button>
+      <button onClick={handleResetFilter}>See All Grocery Items</button>
 
       {/* Grocery List */}
       <ul>
@@ -155,9 +190,6 @@ const SmartInventoryTracker = () => {
           </li>
         ))}
       </ul>
-
-      {/* Button to see groceries expiring today */}
-      <button onClick={() => setFilterBy('today')}>Show Expiring Today</button>
     </div>
   );
 };
