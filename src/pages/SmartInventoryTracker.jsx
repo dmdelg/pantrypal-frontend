@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiCall } from "../services/api"; 
 import { useAuth } from "../context/AuthContext"; 
+import { format } from "date-fns";
 
 const SmartInventoryTracker = () => {
   const { token } = useAuth(); 
@@ -20,13 +21,19 @@ const SmartInventoryTracker = () => {
     fetchGroceries();
   }, [fetchGroceries]);
 
+  // Format date as MM-dd-yyyy
+  const formatDate = (dateString) => {
+    return format(new Date(dateString), 'MM-dd-yyyy');
+  };
+
   // Create a new grocery
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Creating grocery:", newGrocery);
+    const formattedExpirationDate = formatDate(newGrocery.expiration_date); 
     await apiCall("/groceries/", {
       method: "POST",
-      body: JSON.stringify(newGrocery),
+      body: JSON.stringify({ ...newGrocery, expiration_date: formattedExpirationDate }),
       headers: { "Content-Type": "application/json" },
     }, token);
     setNewGrocery({ name: '', quantity: '', expiration_date: '' });
@@ -36,9 +43,10 @@ const SmartInventoryTracker = () => {
   // Update an existing grocery
   const handleUpdate = async (id) => {
     console.log("Updating grocery id:", id, "with data:", updateGrocery);
+    const formattedExpirationDate = formatDate(updateGrocery.expiration_date);
     await apiCall(`/groceries/${id}`, {
       method: "PUT",
-      body: JSON.stringify(updateGrocery),
+      body: JSON.stringify({ ...updateGrocery, expiration_date: formattedExpirationDate }),
       headers: { "Content-Type": "application/json" },
     }, token);
     setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' });
@@ -131,7 +139,7 @@ const SmartInventoryTracker = () => {
               </>
             ) : (
               <>
-                {grocery.name} - {grocery.quantity} - Expires on: {grocery.expiration_date}
+                {grocery.name} - {grocery.quantity} - Expires on: {formatDate(grocery.expiration_date)} {/* Format expiration date */}
                 <button onClick={() => setUpdateGrocery({ id: grocery.id, ...grocery })}>Update</button>
                 <button onClick={() => handleDelete(grocery.id)}>Delete</button>
               </>
