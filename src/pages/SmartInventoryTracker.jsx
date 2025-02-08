@@ -6,7 +6,7 @@ import { format } from "date-fns";
 const SmartInventoryTracker = () => {
   const { token } = useAuth(); 
   const [groceries, setGroceries] = useState([]);
-  const [filteredGroceries, setFilteredGroceries] = useState([]);
+  const [filteredGroceries, setFilteredGroceries] = useState([]);  // Start with empty filteredGroceries
   const [newGrocery, setNewGrocery] = useState({ name: '', quantity: '', expiration_date: '' });
   const [updateGrocery, setUpdateGrocery] = useState({ id: null, name: '', quantity: '', expiration_date: '' });
   const [searchQuery, setSearchQuery] = useState('');
@@ -17,7 +17,6 @@ const SmartInventoryTracker = () => {
   const fetchGroceries = useCallback(async () => {
     const data = await apiCall("/groceries/", {}, token); 
     setGroceries(data.groceries);
-    setFilteredGroceries(data.groceries); // Initially set filtered list to be the full list
   }, [token]);
 
   useEffect(() => {
@@ -161,37 +160,41 @@ const SmartInventoryTracker = () => {
 
       {/* Grocery List */}
       <ul>
-        {filteredGroceries.map((grocery) => (
-          <li key={grocery.id}>
-            {updateGrocery.id === grocery.id ? (
-              <>
-                <input
-                  type="text"
-                  value={updateGrocery.name}
-                  onChange={(e) => setUpdateGrocery({ ...updateGrocery, name: e.target.value })}
-                />
-                <input
-                  type="text"
-                  value={updateGrocery.quantity}
-                  onChange={(e) => setUpdateGrocery({ ...updateGrocery, quantity: e.target.value })}
-                />
-                <input
-                  type="date"
-                  value={updateGrocery.expiration_date}
-                  onChange={(e) => setUpdateGrocery({ ...updateGrocery, expiration_date: e.target.value })}
-                />
-                <button onClick={() => handleUpdate(grocery.id)}>Update</button>
-                <button onClick={() => setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' })}>Cancel</button>
-              </>
-            ) : (
-              <>
-                {grocery.name} - {grocery.quantity} - Expires on: {formatDate(grocery.expiration_date)}
-                <button onClick={() => setUpdateGrocery({ id: grocery.id, ...grocery })}>Update</button>
-                <button onClick={() => handleDelete(grocery.id)}>Delete</button>
-              </>
-            )}
-          </li>
-        ))}
+        {filteredGroceries.length > 0 ? (
+          filteredGroceries.map((grocery) => (
+            <li key={grocery.id}>
+              {updateGrocery.id === grocery.id ? (
+                <>
+                  <input
+                    type="text"
+                    value={updateGrocery.name}
+                    onChange={(e) => setUpdateGrocery({ ...updateGrocery, name: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    value={updateGrocery.quantity}
+                    onChange={(e) => setUpdateGrocery({ ...updateGrocery, quantity: e.target.value })}
+                  />
+                  <input
+                    type="date"
+                    value={updateGrocery.expiration_date}
+                    onChange={(e) => setUpdateGrocery({ ...updateGrocery, expiration_date: e.target.value })}
+                  />
+                  <button onClick={() => handleUpdate(grocery.id)}>Update</button>
+                  <button onClick={() => setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' })}>Cancel</button>
+                </>
+              ) : (
+                <>
+                  {grocery.name} - {grocery.quantity} - Expires on: {formatDate(grocery.expiration_date)}
+                  <button onClick={() => setUpdateGrocery({ id: grocery.id, ...grocery })}>Update</button>
+                  <button onClick={() => handleDelete(grocery.id)}>Delete</button>
+                </>
+              )}
+            </li>
+          ))
+        ) : (
+          <p>No groceries to display</p>
+        )}
       </ul>
     </div>
   );
