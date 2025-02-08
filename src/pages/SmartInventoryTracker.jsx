@@ -1,104 +1,79 @@
-import { useEffect, useState } from "react";
-import { apiCall } from "../services/api";
-import { useAuth } from "../context/AuthContext";
+import { useCallback, useEffect, useState } from "react";
+import { apiCall } from "../services/api"; 
+import { useAuth } from "../context/AuthContext"; 
 
 const SmartInventoryTracker = () => {
-  const { token } = useAuth();
+  const { token } = useAuth(); 
   const [groceries, setGroceries] = useState([]);
-  const [newGrocery, setNewGrocery] = useState({
-    name: "",
-    quantity: "",
-    expiration_date: "",
-  });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
+  const [newGrocery, setNewGrocery] = useState({ name: '', quantity: '', expiration_date: '' });
+  const [updateGrocery, setUpdateGrocery] = useState({ id: null, name: '', quantity: '', expiration_date: '' });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
 
-  useEffect(() => {
-    const fetchGroceries = async () => {
-      const data = await apiCall("/groceries/", {}, token);
-      setGroceries(data.groceries);
-    };
-    fetchGroceries();
+  // Memoize fetchGroceries so it's stable for useEffect dependencies
+  const fetchGroceries = useCallback(async () => {
+    const data = await apiCall("/groceries/", {}, token); 
+    setGroceries(data.groceries);
   }, [token]);
 
+  useEffect(() => {
+    fetchGroceries();
+  }, [fetchGroceries]);
+
+  // Create a new grocery
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await apiCall(
-      "/groceries/",
-      {
-        method: "POST",
-        body: JSON.stringify(newGrocery),
-        headers: { "Content-Type": "application/json" },
-      },
-      token
-    );
-    setNewGrocery({ name: "", quantity: "", expiration_date: "" });
-    const data = await apiCall("/groceries/", {}, token);
-    setGroceries(data.groceries);
+    console.log("Creating grocery:", newGrocery);
+    await apiCall("/groceries/", {
+      method: "POST",
+      body: JSON.stringify(newGrocery),
+      headers: { "Content-Type": "application/json" },
+    }, token);
+    setNewGrocery({ name: '', quantity: '', expiration_date: '' });
+    fetchGroceries();
   };
 
+  // Update an existing grocery
   const handleUpdate = async (id) => {
-    const groceryToUpdate = groceries.find((grocery) => grocery.id === id);
-    if (!groceryToUpdate) {
-      console.error("Grocery not found!");
-      return;
-    }
-
-    const updatedGrocery = {
-      ...groceryToUpdate,
-      ...newGrocery,
-      expiration_date: new Date(
-        newGrocery.expiration_date || groceryToUpdate.expiration_date
-      )
-        .toISOString()
-        .split("T")[0],
-    };
-
-    await apiCall(
-      `/groceries/${id}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(updatedGrocery),
-        headers: { "Content-Type": "application/json" },
-      },
-      token
-    );
-
-    const data = await apiCall("/groceries/", {}, token);
-    setGroceries(data.groceries);
-    setNewGrocery({ name: "", quantity: "", expiration_date: "" });
+    console.log("Updating grocery id:", id, "with data:", updateGrocery);
+    await apiCall(`/groceries/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(updateGrocery),
+      headers: { "Content-Type": "application/json" },
+    }, token);
+    setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' });
+    fetchGroceries();
   };
 
+  // Delete a grocery
   const handleDelete = async (id) => {
     await apiCall(`/groceries/${id}`, { method: "DELETE" }, token);
-    const data = await apiCall("/groceries/", {}, token);
-    setGroceries(data.groceries);
+    fetchGroceries();
   };
 
+  // Search groceries by name
   const handleSearch = async () => {
-    const data = await apiCall(`/groceries/search?name=${searchQuery}`, {}, token);
+    const data = await apiCall(`/groceries/search?name=${searchQuery}`, {}, token); 
     setGroceries(data.groceries);
   };
 
-  const getGroceryById = async (id) => {
-    const data = await apiCall(`/groceries/${id}`, {}, token);
-    console.log(data.grocery);
-  };
-
+  // Filter groceries by a given expiration date
   const getFilteredGroceries = async (filterParams) => {
     const queryParams = new URLSearchParams(filterParams).toString();
-    const data = await apiCall(`/groceries?${queryParams}`, {}, token);
+    const data = await apiCall(`/groceries?${queryParams}`, {}, token); 
     setGroceries(data.groceries);
   };
 
   const filterByToday = () => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date().toISOString().split('T')[0]; 
     getFilteredGroceries({ expiration_date: today });
   };
 
   return (
     <div>
       <h1>Smart Inventory Tracker</h1>
+
+      {/* Search Section */}
       <input
         type="text"
         value={searchQuery}
@@ -107,7 +82,9 @@ const SmartInventoryTracker = () => {
       />
       <button onClick={handleSearch}>Search</button>
 
+      {/* Create New Grocery Form */}
       <form onSubmit={handleSubmit}>
+        <h2>Create Grocery</h2>
         <input
           type="text"
           placeholder="Grocery Name"
@@ -123,40 +100,47 @@ const SmartInventoryTracker = () => {
         <input
           type="date"
           value={newGrocery.expiration_date}
-          onChange={(e) =>
-            setNewGrocery({ ...newGrocery, expiration_date: e.target.value })
-          }
+          onChange={(e) => setNewGrocery({ ...newGrocery, expiration_date: e.target.value })}
         />
         <button type="submit">Add Grocery</button>
       </form>
 
+      {/* Grocery List */}
       <ul>
         {groceries.map((grocery) => (
           <li key={grocery.id}>
-            <input
-              type="text"
-              value={newGrocery.name || grocery.name}
-              onChange={(e) => setNewGrocery({ ...newGrocery, name: e.target.value })}
-            />
-            <input
-              type="text"
-              value={newGrocery.quantity || grocery.quantity}
-              onChange={(e) => setNewGrocery({ ...newGrocery, quantity: e.target.value })}
-            />
-            <input
-              type="date"
-              value={newGrocery.expiration_date || grocery.expiration_date}
-              onChange={(e) =>
-                setNewGrocery({ ...newGrocery, expiration_date: e.target.value })
-              }
-            />
-            <button onClick={() => handleUpdate(grocery.id)}>Update</button>
-            <button onClick={() => handleDelete(grocery.id)}>Delete</button>
-            <button onClick={() => getGroceryById(grocery.id)}>View Details</button>
+            {updateGrocery.id === grocery.id ? (
+              <>
+                <input
+                  type="text"
+                  value={updateGrocery.name}
+                  onChange={(e) => setUpdateGrocery({ ...updateGrocery, name: e.target.value })} 
+                />
+                <input
+                  type="text"
+                  value={updateGrocery.quantity}
+                  onChange={(e) => setUpdateGrocery({ ...updateGrocery, quantity: e.target.value })} 
+                />
+                <input
+                  type="date"
+                  value={updateGrocery.expiration_date}
+                  onChange={(e) => setUpdateGrocery({ ...updateGrocery, expiration_date: e.target.value })} 
+                />
+                <button onClick={() => handleUpdate(grocery.id)}>Update</button>
+                <button onClick={() => setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' })}>Cancel</button>
+              </>
+            ) : (
+              <>
+                {grocery.name} - {grocery.quantity} - Expires on: {grocery.expiration_date}
+                <button onClick={() => setUpdateGrocery({ id: grocery.id, ...grocery })}>Update</button>
+                <button onClick={() => handleDelete(grocery.id)}>Delete</button>
+              </>
+            )}
           </li>
         ))}
       </ul>
 
+      {/* Filtering Section */}
       <button onClick={filterByToday}>Filter by Expiration Date</button>
       <input
         type="date"
