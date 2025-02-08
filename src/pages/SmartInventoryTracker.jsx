@@ -30,10 +30,10 @@ const SmartInventoryTracker = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Creating grocery:", newGrocery);
-    const formattedExpirationDate = formatDate(newGrocery.expiration_date); 
+    // No need to format the expiration date here, as Flask accepts the default YYYY-MM-DD format
     await apiCall("/groceries/", {
       method: "POST",
-      body: JSON.stringify({ ...newGrocery, expiration_date: formattedExpirationDate }),
+      body: JSON.stringify({ ...newGrocery, expiration_date: newGrocery.expiration_date }), // Send as YYYY-MM-DD
       headers: { "Content-Type": "application/json" },
     }, token);
     setNewGrocery({ name: '', quantity: '', expiration_date: '' });
@@ -43,10 +43,9 @@ const SmartInventoryTracker = () => {
   // Update an existing grocery
   const handleUpdate = async (id) => {
     console.log("Updating grocery id:", id, "with data:", updateGrocery);
-    const formattedExpirationDate = formatDate(updateGrocery.expiration_date);
     await apiCall(`/groceries/${id}`, {
       method: "PUT",
-      body: JSON.stringify({ ...updateGrocery, expiration_date: formattedExpirationDate }),
+      body: JSON.stringify({ ...updateGrocery, expiration_date: updateGrocery.expiration_date }), // Send as YYYY-MM-DD
       headers: { "Content-Type": "application/json" },
     }, token);
     setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' });
