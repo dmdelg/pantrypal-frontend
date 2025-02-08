@@ -36,7 +36,10 @@ const SmartInventoryTracker = () => {
     await apiCall("/groceries/", {
       method: "POST",
       body: JSON.stringify({ ...newGrocery, expiration_date: newGrocery.expiration_date }),
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
     }, token);
     setNewGrocery({ name: '', quantity: '', expiration_date: '' });
     fetchGroceries(); // Refresh groceries after creation
