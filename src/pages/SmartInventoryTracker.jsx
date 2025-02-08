@@ -60,7 +60,7 @@ const SmartInventoryTracker = () => {
   // Filter groceries by a given expiration date
   const getFilteredGroceries = async (filterParams) => {
     const queryParams = new URLSearchParams(filterParams).toString();
-    const data = await apiCall(`/groceries?${queryParams}`, {}, token); 
+    const data = await apiCall(`/groceries/${queryParams}`, {}, token); 
     setGroceries(data.groceries);
   };
 
