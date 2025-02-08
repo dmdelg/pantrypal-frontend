@@ -10,6 +10,7 @@ const SmartInventoryTracker = () => {
   const [updateGrocery, setUpdateGrocery] = useState({ id: null, name: '', quantity: '', expiration_date: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
+  const [filterOption, setFilterOption] = useState('all');  // New state for the filter option
 
   // Memoize fetchGroceries so it's stable for useEffect dependencies
   const fetchGroceries = useCallback(async () => {
@@ -45,7 +46,7 @@ const SmartInventoryTracker = () => {
     console.log("Updating grocery id:", id, "with data:", updateGrocery);
     await apiCall(`/groceries/${id}`, {
       method: "PUT",
-      body: JSON.stringify({ ...updateGrocery, expiration_date: updateGrocery.expiration_date }), // Send as YYYY-MM-DD
+      body: JSON.stringify({ ...updateGrocery, expiration_date: updateGrocery.expiration_date }),
       headers: { "Content-Type": "application/json" },
     }, token);
     setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' });
@@ -64,16 +65,30 @@ const SmartInventoryTracker = () => {
     setGroceries(data.groceries);
   };
 
-  // Filter groceries by a given expiration date
-  const getFilteredGroceries = async (filterParams) => {
+  // Filter groceries by name, quantity, expiration date, or show all
+  const handleFilter = async () => {
+    let filterParams = {};
+
+    if (filterOption === 'name' && searchQuery) {
+      filterParams = { name: searchQuery };
+    } else if (filterOption === 'quantity' && searchQuery) {
+      filterParams = { quantity: searchQuery };
+    } else if (filterOption === 'expiration_date' && selectedDate) {
+      filterParams = { expiration_date: format(new Date(selectedDate), "MM-dd-yyyy") };
+    } else if (filterOption === 'today') {
+      const today = format(new Date(), "MM-dd-yyyy");
+      filterParams = { expiration_date: today };
+    }
+
     const queryParams = new URLSearchParams(filterParams).toString();
-    const data = await apiCall(`/groceries/${queryParams}`, {}, token); 
+    const data = await apiCall(`/groceries/${queryParams}`, {}, token);
     setGroceries(data.groceries);
   };
 
+  // Filter by today's expiration date
   const filterByToday = () => {
-    const today = new Date().toISOString().split('T')[0]; 
-    getFilteredGroceries({ expiration_date: today });
+    const today = format(new Date(), "MM-dd-yyyy"); 
+    handleFilter({ expiration_date: today });
   };
 
   return (
@@ -148,15 +163,24 @@ const SmartInventoryTracker = () => {
       </ul>
 
       {/* Filtering Section */}
-      <button onClick={filterByToday}>Filter by Expiration Date</button>
-      <input
-        type="date"
-        value={selectedDate}
-        onChange={(e) => setSelectedDate(e.target.value)}
-      />
-      <button onClick={() => getFilteredGroceries({ expiration_date: selectedDate })}>
-        Filter by Selected Expiry Date
-      </button>
+      <div>
+        <label htmlFor="filter">Filter by:</label>
+        <select
+          id="filter"
+          value={filterOption}
+          onChange={(e) => setFilterOption(e.target.value)}
+        >
+          <option value="all">Show All</option>
+          <option value="name">Name</option>
+          <option value="quantity">Quantity</option>
+          <option value="expiration_date">Expiration Date</option>
+          <option value="today">Expires Today</option>
+        </select>
+        <button onClick={handleFilter}>Apply Filter</button>
+      </div>
+
+      {/* Button to filter by today's expiration date */}
+      <button onClick={filterByToday}>See What's Expiring Today</button>
     </div>
   );
 };
