@@ -6,17 +6,19 @@ import { format } from "date-fns";
 const SmartInventoryTracker = () => {
   const { token } = useAuth(); 
   const [groceries, setGroceries] = useState([]);
-  const [filteredGroceries, setFilteredGroceries] = useState([]);  // Start with empty filteredGroceries
+  const [filteredGroceries, setFilteredGroceries] = useState([]);  
   const [newGrocery, setNewGrocery] = useState({ name: '', quantity: '', expiration_date: '' });
   const [updateGrocery, setUpdateGrocery] = useState({ id: null, name: '', quantity: '', expiration_date: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('none');
   const [filterByToday, setFilterByToday] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);  // Added state for loading
 
   // Fetch groceries and set both the full list and the filtered list
   const fetchGroceries = useCallback(async () => {
     const data = await apiCall("/groceries/", {}, token); 
     setGroceries(data.groceries);
+    setIsLoading(false); // Set loading to false once groceries are fetched
   }, [token]);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ const SmartInventoryTracker = () => {
     fetchGroceries(); // Refresh groceries after deletion
   };
 
-  // Handle Search
+  // Handle Search on Enter or Button Click
   const handleSearch = () => {
     let filtered = [...groceries];
     if (searchQuery) {
@@ -71,6 +73,12 @@ const SmartInventoryTracker = () => {
       );
     }
     setFilteredGroceries(filtered);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   // Sort groceries based on selected sort option
@@ -141,6 +149,7 @@ const SmartInventoryTracker = () => {
         type="text"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
+        onKeyDown={handleSearchKeyDown} // Trigger search on Enter
         placeholder="Search by name"
       />
       <button onClick={handleSearch}>Search</button>
@@ -159,9 +168,13 @@ const SmartInventoryTracker = () => {
       <button onClick={handleResetFilter}>See All Grocery Items</button>
 
       {/* Grocery List */}
-      <ul>
-        {filteredGroceries.length > 0 ? (
-          filteredGroceries.map((grocery) => (
+      {isLoading ? (
+        <p>Loading...</p> // Loading state
+      ) : filteredGroceries.length === 0 && searchQuery === "" ? (
+        <p>No groceries found. Please search or add groceries.</p> // Message when no groceries and no search done
+      ) : (
+        <ul>
+          {filteredGroceries.map((grocery) => (
             <li key={grocery.id}>
               {updateGrocery.id === grocery.id ? (
                 <>
@@ -191,11 +204,9 @@ const SmartInventoryTracker = () => {
                 </>
               )}
             </li>
-          ))
-        ) : (
-          <p>No groceries to display</p>
-        )}
-      </ul>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };
