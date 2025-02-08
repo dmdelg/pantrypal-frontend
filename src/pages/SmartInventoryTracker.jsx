@@ -53,7 +53,7 @@ const SmartInventoryTracker = () => {
 
   // Search groceries by name
   const handleSearch = async () => {
-    const data = await apiCall(`/groceries/search?name=${searchQuery}`, {}, token); 
+    const data = await apiCall(`/groceries/name=${searchQuery}`, {}, token); 
     setGroceries(data.groceries);
   };
 
