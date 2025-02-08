@@ -6,19 +6,16 @@ import { format } from "date-fns";
 const SmartInventoryTracker = () => {
   const { token } = useAuth(); 
   const [groceries, setGroceries] = useState([]);
-  const [filteredGroceries, setFilteredGroceries] = useState([]);  
   const [newGrocery, setNewGrocery] = useState({ name: '', quantity: '', expiration_date: '' });
   const [updateGrocery, setUpdateGrocery] = useState({ id: null, name: '', quantity: '', expiration_date: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('none');
-  const [filterByToday, setFilterByToday] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);  // Added state for loading
+  const [filterByToday, setFilterByToday] = useState(false); // Track if we are filtering by today
 
-  // Fetch groceries and set both the full list and the filtered list
+  // Fetch groceries and set the list
   const fetchGroceries = useCallback(async () => {
     const data = await apiCall("/groceries/", {}, token); 
     setGroceries(data.groceries);
-    setIsLoading(false); // Set loading to false once groceries are fetched
   }, [token]);
 
   useEffect(() => {
@@ -66,22 +63,36 @@ const SmartInventoryTracker = () => {
     }
   };  
 
-// Update an existing grocery
-const handleUpdate = async (id) => {
-  console.log("Updating grocery id:", id, "with data:", updateGrocery);
+  const handleUpdate = async (id) => {
+    console.log("Updating grocery id:", id, "with data:", updateGrocery);
   
-  // Format the expiration date to MM-dd-yyyy
-  const formattedExpirationDate = format(new Date(updateGrocery.expiration_date), 'MM-dd-yyyy');
+    // Format the expiration date before sending it
+    const formattedExpirationDate = format(new Date(updateGrocery.expiration_date), 'MM-dd-yyyy');
+    
+    try {
+      const response = await fetch(`/groceries/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...updateGrocery,
+          expiration_date: formattedExpirationDate,  // Send the formatted expiration date
+        }),
+      });
   
-  await apiCall(`/groceries/${id}`, {
-    method: "PUT",
-    body: JSON.stringify({ ...updateGrocery, expiration_date: formattedExpirationDate }),
-    headers: { "Content-Type": "application/json" },
-  }, token);
-  setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' });
-  fetchGroceries(); // Refresh groceries after update
-};
-
+      if (!response.ok) {
+        throw new Error(`Failed to update grocery. Status: ${response.status}`);
+      }
+  
+      // If successful, fetch updated groceries and reset the form
+      await fetchGroceries();
+      setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' });
+    } catch (error) {
+      console.error("Error updating grocery:", error);
+    }
+  };
+  
   // Delete a grocery
   const handleDelete = async (id) => {
     await apiCall(`/groceries/${id}`, { method: "DELETE" }, token);
@@ -90,13 +101,7 @@ const handleUpdate = async (id) => {
 
   // Handle Search on Enter or Button Click
   const handleSearch = () => {
-    let filtered = [...groceries];
-    if (searchQuery) {
-      filtered = filtered.filter((grocery) =>
-        grocery.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    setFilteredGroceries(filtered);
+    // No need to set filteredGroceries separately anymore
   };
 
   const handleSearchKeyDown = (e) => {
@@ -107,38 +112,37 @@ const handleUpdate = async (id) => {
 
   // Sort groceries based on selected sort option
   const handleSort = (option) => {
-    let sorted = [...filteredGroceries];
-    switch (option) {
-      case 'name_asc':
-        sorted.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'name_desc':
-        sorted.sort((a, b) => b.name.localeCompare(a.name));
-        break;
-      case 'quantity':
-        sorted.sort((a, b) => a.quantity - b.quantity);
-        break;
-      case 'expiration_date':
-        sorted.sort((a, b) => new Date(a.expiration_date) - new Date(b.expiration_date));
-        break;
-      default:
-        break;
-    }
-    setFilteredGroceries(sorted);
+    setSortOption(option);  // Set sort option to trigger re-render
   };
 
   const handleFilterToday = () => {
-    const today = format(new Date(), 'MM-dd-yyyy');
-    const filtered = groceries.filter((grocery) => formatDate(grocery.expiration_date) === today);
-    setFilteredGroceries(filtered);
-    setFilterByToday(true);  
+    setFilterByToday(true);  // Set filter state to true for today's expiration
   };
   
-  // And when resetting the filter
   const handleResetFilter = () => {
-    setFilteredGroceries(groceries);
-    setFilterByToday(false);  
+    setFilterByToday(false);  // Reset filter state to false
   };
+
+  // Dynamically compute the filtered and sorted groceries
+  const filteredGroceries = groceries
+    .filter(grocery => 
+      grocery.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
+      (!filterByToday || formatDate(grocery.expiration_date) === format(new Date(), 'MM-dd-yyyy'))  // Use filterByToday here
+    )
+    .sort((a, b) => {
+      switch (sortOption) {
+        case 'name_asc':
+          return a.name.localeCompare(b.name);
+        case 'name_desc':
+          return b.name.localeCompare(a.name);
+        case 'quantity':
+          return a.quantity - b.quantity;
+        case 'expiration_date':
+          return new Date(a.expiration_date) - new Date(b.expiration_date);
+        default:
+          return 0;
+      }
+    });
 
   return (
     <div>
@@ -180,7 +184,7 @@ const handleUpdate = async (id) => {
       <button onClick={handleSearch}>Search</button>
 
       {/* Sorting Dropdown */}
-      <select onChange={(e) => { handleSort(e.target.value); setSortOption(e.target.value); }} value={sortOption}>
+      <select onChange={(e) => handleSort(e.target.value)} value={sortOption}>
         <option value="none">Sort By</option>
         <option value="name_asc">Name (A-Z)</option>
         <option value="name_desc">Name (Z-A)</option>
@@ -193,9 +197,7 @@ const handleUpdate = async (id) => {
       <button onClick={handleResetFilter}>See All Grocery Items</button>
 
       {/* Grocery List */}
-      {isLoading ? (
-        <p>Loading...</p> // Loading state
-      ) : filteredGroceries.length === 0 && searchQuery === "" ? (
+      {filteredGroceries.length === 0 && searchQuery === "" ? (
         <p>No groceries found. Please search or add groceries.</p> // Message when no groceries and no search done
       ) : (
         <ul>
