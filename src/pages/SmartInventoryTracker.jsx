@@ -49,17 +49,17 @@ const SmartInventoryTracker = () => {
         data: newItem,
       });
       
-      if (response.status === 200) {
-        setGroceries((prevGroceries) => [...prevGroceries, response.data]);
-        setNewGrocery({ name: '', quantity: '', expiration_date: '' });
-      } else {
-        console.error('Failed to add grocery item');
-      }
-    } catch (error) {
-      console.error('Error adding grocery item:', error);
+    if (response.status === 201) {
+      setGroceries((prevGroceries) => [...prevGroceries, response.data.grocery]);
+      
+      setNewGrocery({ name: '', quantity: '', expiration_date: '' });
+    } else {
+      console.error('Failed to add grocery item');
     }
-  };
-
+  } catch (error) {
+    console.error('Error adding grocery item:', error);
+  }
+};
   const handleUpdate = async (id) => {
     const formattedExpirationDate = format(new Date(updateGrocery.expiration_date), 'MM-dd-yyyy');
     try {
