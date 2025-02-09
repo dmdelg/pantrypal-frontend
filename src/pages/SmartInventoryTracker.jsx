@@ -18,10 +18,6 @@ const SmartInventoryTracker = () => {
     setGroceries(data.groceries);
   }, [token]);
 
-  useEffect(() => {
-    fetchGroceries();
-  }, [fetchGroceries]);
-
   // Format date as MM-dd-yyyy
   const formatDate = (dateString) => {
     return format(new Date(dateString), 'MM-dd-yyyy');
@@ -201,9 +197,9 @@ const SmartInventoryTracker = () => {
         <option value="expiration_date">Expiration Date</option>
       </select>
 
-      {/* Buttons to filter by today's expiration and see all groceries */}
-      <button onClick={handleFilterToday}>Show Expiring Today</button>
-      <button onClick={handleResetFilter}>See All Grocery Items</button>
+      <button onClick={handleFilterToday}>
+        {filterByToday ? "Show All" : "Show Expiring Today"}
+      </button>
 
       {/* Grocery List */}
       {filteredGroceries.length === 0 && searchQuery === "" ? (
