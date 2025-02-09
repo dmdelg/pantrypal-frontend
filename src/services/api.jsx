@@ -1,7 +1,8 @@
+import axios from 'axios';
+
 const BASE_URL = 'https://pantrypal-backend.onrender.com';
 
 export const apiCall = async (url, options = {}, token = '') => {
-  // Create headers object
   const headers = {
     "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
@@ -9,18 +10,19 @@ export const apiCall = async (url, options = {}, token = '') => {
   };
 
   try {
-    const response = await fetch(`${BASE_URL}${url}`, {
-      ...options,
+    const response = await axios({
+      method: options.method,
+      url: `${BASE_URL}${url}`,
       headers,
-      credentials: 'include',
+      data: options.body, // axios uses 'data' for the request body
+      withCredentials: true, // To include cookies if needed
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Something went wrong!');
+    
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error('Something went wrong!');
     }
 
-    return response.json();
+    return response.data;
   } catch (error) {
     console.error('Error during API call:', error);
     throw new Error(error.message || 'An unknown error occurred');
