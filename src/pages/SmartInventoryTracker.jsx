@@ -38,6 +38,8 @@ const SmartInventoryTracker = () => {
       quantity: Number(newGrocery.quantity),
       expiration_date: formatDate(newGrocery.expiration_date), 
     };
+    
+    console.log('Sending data:', newItem);
 
     try {
       const response = await apiCall('/groceries/', {
@@ -48,9 +50,11 @@ const SmartInventoryTracker = () => {
         },
         data: newItem,
       });
-      
+    
+      console.log('Response data:', response.data);  
+
     if (response.status === 201) {
-      setGroceries((prevGroceries) => [...prevGroceries, response.data.grocery]);
+      setGroceries((prevGroceries) => [...prevGroceries, ...response.data.groceries]);
       
       setNewGrocery({ name: '', quantity: '', expiration_date: '' });
     } else {
