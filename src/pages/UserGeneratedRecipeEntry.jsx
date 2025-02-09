@@ -18,8 +18,8 @@ const MyRecipes = () => {
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState('');
   const [showAllRecipes, setShowAllRecipes] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(''); 
-  const [sortBy, setSortBy] = useState('name'); 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('name');
 
   // Fetch user's recipes on demand
   const fetchRecipes = async () => {
@@ -30,7 +30,8 @@ const MyRecipes = () => {
       setRecipes(response.data.recipes);
       setFilteredRecipes(response.data.recipes);
     } catch (err) {
-      setError('Error fetching recipes.');
+      setError(`Error fetching recipes: ${err.message}`);
+      console.error('Error fetching recipes:', err);
     }
   };
 
@@ -39,15 +40,18 @@ const MyRecipes = () => {
     setSearchQuery(e.target.value);
   };
 
-  // Filter recipes by title
-  useEffect(() => {
+  const handleSearch = () => {
     const filtered = recipes.filter((recipe) =>
       recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredRecipes(filtered);
-  }, [searchQuery, recipes]);
+  };
 
-  // Sorting handler
+  // Sort handler
+  const handleSortChange = (e) => {
+    setSortBy(e.target.value);
+  };
+
   useEffect(() => {
     let sortedRecipes;
     if (sortBy === 'name') {
@@ -115,7 +119,8 @@ const MyRecipes = () => {
       });
       fetchRecipes();
     } catch (err) {
-      setError('Error deleting recipe.');
+      setError(`Error deleting recipe: ${err.message}`);
+      console.error('Error deleting recipe:', err);
     }
   };
 
@@ -124,17 +129,21 @@ const MyRecipes = () => {
       <h1>My Recipes</h1>
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      {/* Search Input */}
+      {/* Search Input and Button */}
       <input
         type="text"
         placeholder="Search recipes by name"
         value={searchQuery}
         onChange={handleSearchChange}
+        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
       />
+      <button onClick={handleSearch}>Search</button>
 
-      {/* Sort Buttons */}
-      <button onClick={() => setSortBy('name')}>Sort by Name</button>
-      <button onClick={() => setSortBy('date')}>Sort by Date</button>
+      {/* Sort Dropdown */}
+      <select value={sortBy} onChange={handleSortChange}>
+        <option value="name">Sort by Name</option>
+        <option value="date">Sort by Date</option>
+      </select>
 
       {/* See All Recipes Button */}
       <button onClick={() => setShowAllRecipes((prev) => !prev)}>
