@@ -10,14 +10,12 @@ export const apiCall = async (url, options = {}, token = '') => {
   };
 
   try {
-    const response = await axios({
-      method: options.method,
-      url: `${BASE_URL}${url}`,
+    const response = await axios(`${BASE_URL}${url}`, {
+      ...options,
       headers,
-      data: options.body, // axios uses 'data' for the request body
-      withCredentials: true, // To include cookies if needed
+      withCredentials: true,
     });
-    
+
     if (response.status < 200 || response.status >= 300) {
       throw new Error('Something went wrong!');
     }
