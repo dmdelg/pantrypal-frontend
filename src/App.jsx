@@ -5,6 +5,7 @@ import SignUp from './pages/SignUp';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import SmartInventoryTracker from './pages/SmartInventoryTracker';
+import RecipeEntry from './pages/UserGeneratedRecipeEntry';
 import Navbar from './components/Navbar';
 import './App.css';
 import './index.css';
@@ -22,6 +23,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/smart-inventory" element={<SmartInventoryTracker />} />
+              <Route path="/smart-inventory" element={<RecipeEntry />} />
             </Routes>
           </main>
         </div>

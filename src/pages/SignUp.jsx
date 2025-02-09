@@ -23,10 +23,10 @@ const SignUp = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(signUpData),
+        data: signUpData,
       });
-
-      const data = await response.json();
+      
+      const data = response;
 
       if (response.ok) {
         console.log('User registered successfully');

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { apiCall } from '../services/api'; 
 
 const RecipeEntry = () => {
-  const { token } = useAuth(); // Getting the token from Auth context
+  const { token } = useAuth();
   const [recipe, setRecipe] = useState({
     title: '',
     ingredients: '',

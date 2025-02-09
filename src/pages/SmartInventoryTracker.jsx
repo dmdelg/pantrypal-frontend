@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { apiCall } from "../services/api"; 
+import axios from "axios"; // Import axios
 import { useAuth } from "../context/AuthContext"; 
 import { format } from "date-fns";
 
@@ -14,8 +14,14 @@ const SmartInventoryTracker = () => {
 
   // Fetch groceries when triggered by buttons or actions
   const fetchGroceries = useCallback(async () => {
-    const data = await apiCall('/groceries/', {}, token); 
-    setGroceries(data.groceries);
+    try {
+      const response = await axios.get('/groceries/', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setGroceries(response.data.groceries);
+    } catch (error) {
+      console.error('Error fetching groceries:', error);
+    }
   }, [token]);
 
   // Format date as MM-dd-yyyy
@@ -31,48 +37,46 @@ const SmartInventoryTracker = () => {
       expiration_date: newGrocery.expiration_date,
     };
   
-    const response = await apiCall('/groceries', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(newItem),
-    });
-    
-    if (response.ok) {
-      const addedGrocery = await response.json();
-      setGroceries((prevGroceries) => [...prevGroceries, addedGrocery]); 
-      setNewGrocery({ name: '', quantity: '', expiration_date: '' });
-    } else {
-      console.error('Failed to add grocery item');
+    try {
+      const response = await axios.post('/groceries', newItem, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (response.status === 200) {
+        setGroceries((prevGroceries) => [...prevGroceries, response.data]); 
+        setNewGrocery({ name: '', quantity: '', expiration_date: '' });
+      } else {
+        console.error('Failed to add grocery item');
+      }
+    } catch (error) {
+      console.error('Error adding grocery item:', error);
     }
   };
 
   const handleUpdate = async (id) => {
     const formattedExpirationDate = format(new Date(updateGrocery.expiration_date), 'MM-dd-yyyy');
     try {
-      const response = await apiCall(`/groceries/${id}`, {
-        method: "PUT",
+      const response = await axios.put(`/groceries/${id}`, {
+        ...updateGrocery,
+        expiration_date: formattedExpirationDate,
+      }, {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...updateGrocery,
-          expiration_date: formattedExpirationDate,
-        }),
       });
       
-      if (response.ok) {
-        const updatedGrocery = await response.json(); 
+      if (response.status === 200) {
+        const updatedGrocery = response.data; 
         const updatedGroceryList = groceries.map(grocery =>
           grocery.id === updatedGrocery.id ? updatedGrocery : grocery
         );
         setGroceries(updatedGroceryList);
       } else {
-        const errorMessage = await response.text();
-        console.error("Error:", errorMessage);
+        console.error("Error:", response.data.message);
       }
     } catch (error) {
       console.error("Error updating grocery:", error);
@@ -80,8 +84,14 @@ const SmartInventoryTracker = () => {
   };
 
   const handleDelete = async (id) => {
-    await apiCall(`/groceries/${id}`, { method: "DELETE" }, token);
-    fetchGroceries(); 
+    try {
+      await axios.delete(`/groceries/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchGroceries(); 
+    } catch (error) {
+      console.error('Error deleting grocery item:', error);
+    }
   };
 
   const handleSearch = () => {
