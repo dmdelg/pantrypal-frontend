@@ -35,8 +35,8 @@ const SmartInventoryTracker = () => {
     event.preventDefault();
     const newItem = {
       name: newGrocery.name,
-      quantity: newGrocery.quantity,
-      expiration_date: newGrocery.expiration_date,
+      quantity: Number(newGrocery.quantity),
+      expiration_date: formatDate(newGrocery.expiration_date), 
     };
 
     try {
