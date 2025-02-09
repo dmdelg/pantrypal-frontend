@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { apiCall } from "../services/api"; 
 import { useAuth } from "../context/AuthContext"; 
 import { format } from "date-fns";
@@ -10,9 +10,9 @@ const SmartInventoryTracker = () => {
   const [updateGrocery, setUpdateGrocery] = useState({ id: null, name: '', quantity: '', expiration_date: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('none');
-  const [filterByToday, setFilterByToday] = useState(false); // Track if we are filtering by today
+  const [filterByToday, setFilterByToday] = useState(false); 
 
-  // Fetch groceries and set the list
+  // Fetch groceries when triggered by buttons or actions
   const fetchGroceries = useCallback(async () => {
     const data = await apiCall("/groceries/", {}, token); 
     setGroceries(data.groceries);
@@ -25,8 +25,6 @@ const SmartInventoryTracker = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-  
-    // Create the grocery item to be added
     const newItem = {
       name: newGrocery.name,
       quantity: newGrocery.quantity,
@@ -37,41 +35,28 @@ const SmartInventoryTracker = () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,  // Assuming you are passing the token for authentication
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(newItem),
     });
     
-  
     if (response.ok) {
-      // If the item is successfully added, update the state with the new grocery
       const addedGrocery = await response.json();
-      setGroceries((prevGroceries) => [...prevGroceries, addedGrocery]); // Use functional update here
-  
-      // Optionally, reset the form fields
-      setNewGrocery({
-        name: '',
-        quantity: '',
-        expiration_date: '',
-      });
+      setGroceries((prevGroceries) => [...prevGroceries, addedGrocery]); 
+      setNewGrocery({ name: '', quantity: '', expiration_date: '' });
     } else {
-      // Handle error if the item is not added
       console.error('Failed to add grocery item');
     }
-  };  
+  };
 
   const handleUpdate = async (id) => {
-    console.log("Updating grocery id:", id, "with data:", updateGrocery);
-  
-    // Format the expiration date before sending it
     const formattedExpirationDate = format(new Date(updateGrocery.expiration_date), 'MM-dd-yyyy');
-    
     try {
       const response = await fetch(`/groceries/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,  // Including token for auth
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
           ...updateGrocery,
@@ -80,15 +65,11 @@ const SmartInventoryTracker = () => {
       });
       
       if (response.ok) {
-        // Assuming the backend responds with the updated grocery item
         const updatedGrocery = await response.json(); 
-  
-        // Update the UI with the new expiration date
         const updatedGroceryList = groceries.map(grocery =>
           grocery.id === updatedGrocery.id ? updatedGrocery : grocery
         );
-  
-        setGroceries(updatedGroceryList); // Update the groceries list in the frontend
+        setGroceries(updatedGroceryList);
       } else {
         const errorMessage = await response.text();
         console.error("Error:", errorMessage);
@@ -97,16 +78,14 @@ const SmartInventoryTracker = () => {
       console.error("Error updating grocery:", error);
     }
   };
-  
-  // Delete a grocery
+
   const handleDelete = async (id) => {
     await apiCall(`/groceries/${id}`, { method: "DELETE" }, token);
-    fetchGroceries(); // Refresh groceries after deletion
+    fetchGroceries(); 
   };
 
-  // Handle Search on Enter or Button Click
   const handleSearch = () => {
-    // No need to set filteredGroceries separately anymore
+    fetchGroceries(); // Trigger the fetch when search is executed
   };
 
   const handleSearchKeyDown = (e) => {
@@ -115,24 +94,26 @@ const SmartInventoryTracker = () => {
     }
   };
 
-  // Sort groceries based on selected sort option
   const handleSort = (option) => {
-    setSortOption(option);  // Set sort option to trigger re-render
+    setSortOption(option);
+    fetchGroceries(); // Fetch groceries after sorting
   };
 
   const handleFilterToday = () => {
-    setFilterByToday(true);  // Set filter state to true for today's expiration
+    setFilterByToday(true);
+    fetchGroceries(); // Fetch groceries after filtering by today
   };
   
   const handleResetFilter = () => {
-    setFilterByToday(false);  // Reset filter state to false
+    setFilterByToday(false);
+    fetchGroceries(); // Reset filter and fetch groceries
   };
 
   // Dynamically compute the filtered and sorted groceries
   const filteredGroceries = groceries
     .filter(grocery => 
       grocery.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
-      (!filterByToday || formatDate(grocery.expiration_date) === format(new Date(), 'MM-dd-yyyy'))  // Use filterByToday here
+      (!filterByToday || formatDate(grocery.expiration_date) === format(new Date(), 'MM-dd-yyyy'))
     )
     .sort((a, b) => {
       switch (sortOption) {
@@ -183,7 +164,7 @@ const SmartInventoryTracker = () => {
         type="text"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        onKeyDown={handleSearchKeyDown} // Trigger search on Enter
+        onKeyDown={handleSearchKeyDown} 
         placeholder="Search by name"
       />
       <button onClick={handleSearch}>Search</button>
@@ -203,7 +184,7 @@ const SmartInventoryTracker = () => {
 
       {/* Grocery List */}
       {filteredGroceries.length === 0 && searchQuery === "" ? (
-        <p>No groceries found. Please search or add groceries.</p> // Message when no groceries and no search done
+        <p>No groceries found. Please search or add groceries.</p>
       ) : (
         <ul>
           {filteredGroceries.map((grocery) => (
