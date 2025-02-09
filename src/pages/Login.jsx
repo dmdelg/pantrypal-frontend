@@ -31,10 +31,10 @@ const Login = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(loginData),
+        data: loginData,
       });
       
-      const data = await response.json();
+      const data = response;
       
       if (data.token) {
         login(data.token);
