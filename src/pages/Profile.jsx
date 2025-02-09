@@ -10,7 +10,7 @@ function Profile() {
           <Link to="/smart-inventory">Smart Inventory Tracker</Link>
         </li>
         <li>
-          <Link to="/recipe-entry">User-Generated Recipe Entry</Link>
+        <Link to="/user-generated-recipe">User-Generated Recipe Entry</Link>
         </li>
         <li>
           <Link to="/health-dashboard">Health Dashboard</Link>
