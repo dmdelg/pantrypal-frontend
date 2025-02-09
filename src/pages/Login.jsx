@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { apiCall } from '../services/api';
 
 const Login = () => {
   const { token, login } = useAuth();
@@ -25,7 +26,7 @@ const Login = () => {
     };
 
     try {
-      const response = await fetch('https://pantrypal-backend.onrender.com/auth/login', {
+      const response = await apiCall('/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

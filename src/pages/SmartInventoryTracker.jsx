@@ -14,7 +14,7 @@ const SmartInventoryTracker = () => {
 
   // Fetch groceries when triggered by buttons or actions
   const fetchGroceries = useCallback(async () => {
-    const data = await apiCall("/groceries/", {}, token); 
+    const data = await apiCall('/groceries/', {}, token); 
     setGroceries(data.groceries);
   }, [token]);
 
@@ -31,7 +31,7 @@ const SmartInventoryTracker = () => {
       expiration_date: newGrocery.expiration_date,
     };
   
-    const response = await fetch('/groceries', {
+    const response = await apiCall('/groceries', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ const SmartInventoryTracker = () => {
   const handleUpdate = async (id) => {
     const formattedExpirationDate = format(new Date(updateGrocery.expiration_date), 'MM-dd-yyyy');
     try {
-      const response = await fetch(`/groceries/${id}`, {
+      const response = await apiCall(`/groceries/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -181,6 +181,9 @@ const SmartInventoryTracker = () => {
       <button onClick={handleFilterToday}>
         {filterByToday ? "Show All" : "Show Expiring Today"}
       </button>
+      
+      {/* Add Reset Filter Button */}
+      <button onClick={handleResetFilter}>Reset Filter</button>
 
       {/* Grocery List */}
       {filteredGroceries.length === 0 && searchQuery === "" ? (

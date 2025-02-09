@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiCall } from '../services/api'; 
+
 
 const SignUp = () => {
   const [email, setEmail] = useState('');
@@ -16,7 +18,7 @@ const SignUp = () => {
     };
 
     try {
-      const response = await fetch('https://pantrypal-backend.onrender.com/auth/register', {
+      const response = await apiCall('/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
