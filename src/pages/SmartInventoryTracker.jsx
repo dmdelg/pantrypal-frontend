@@ -39,8 +39,6 @@ const SmartInventoryTracker = () => {
       expiration_date: formatDate(newGrocery.expiration_date), 
     };
     
-    console.log('Sending data:', newItem);
-
     try {
       const response = await apiCall('/groceries/', {
         method: 'POST',
@@ -50,20 +48,24 @@ const SmartInventoryTracker = () => {
         },
         data: newItem,
       });
-    
-      console.log('Response data:', response.data);  
 
-    if (response.status === 201) {
-      setGroceries((prevGroceries) => [...prevGroceries, ...response.data.groceries]);
-      
-      setNewGrocery({ name: '', quantity: '', expiration_date: '' });
-    } else {
-      console.error('Failed to add grocery item');
+      if (response.status === 201) {
+        console.log('Response data:', response.data); // Debugging line
+  
+        // Check the structure of response.data
+        const addedGrocery = response.data.grocery;
+        if (addedGrocery) {
+          setGroceries((prevGroceries) => [...prevGroceries, addedGrocery]);
+        }
+  
+        setNewGrocery({ name: '', quantity: '', expiration_date: '' });
+      } else {
+        console.error('Failed to add grocery item');
+      }
+    } catch (error) {
+      console.error('Error adding grocery item:', error);
     }
-  } catch (error) {
-    console.error('Error adding grocery item:', error);
-  }
-};
+  };
   const handleUpdate = async (id) => {
     const formattedExpirationDate = format(new Date(updateGrocery.expiration_date), 'MM-dd-yyyy');
     try {
