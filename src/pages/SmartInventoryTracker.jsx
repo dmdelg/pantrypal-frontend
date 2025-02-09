@@ -1,11 +1,10 @@
-import { useCallback, useState } from "react";
-import axios from "axios"; // Import axios
-import { useAuth } from "../context/AuthContext"; 
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { useAuth } from "../context/AuthContext";
 import { apiCall } from "../services/api";
 
 const SmartInventoryTracker = () => {
-  const { token } = useAuth(); 
+  const { token } = useAuth();
   const [groceries, setGroceries] = useState([]);
   const [newGrocery, setNewGrocery] = useState({ name: '', quantity: '', expiration_date: '' });
   const [updateGrocery, setUpdateGrocery] = useState({ id: null, name: '', quantity: '', expiration_date: '' });
@@ -13,19 +12,21 @@ const SmartInventoryTracker = () => {
   const [sortOption, setSortOption] = useState('none');
   const [filterByToday, setFilterByToday] = useState(false); 
 
-  // Fetch groceries when triggered by buttons or actions
-  const fetchGroceries = useCallback(async () => {
-    try {
-      const response = await apiCall('/groceries/', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setGroceries(response.data.groceries);
-    } catch (error) {
-      console.error('Error fetching groceries:', error);
-    }
+  // Fetch groceries once when the component mounts
+  useEffect(() => {
+    const fetchGroceries = async () => {
+      try {
+        const response = await apiCall('/groceries/', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setGroceries(response.data.groceries);
+      } catch (error) {
+        console.error('Error fetching groceries:', error);
+      }
+    };
+    fetchGroceries();
   }, [token]);
 
-  // Format date as MM-dd-yyyy
   const formatDate = (dateString) => {
     return format(new Date(dateString), 'MM-dd-yyyy');
   };
@@ -37,9 +38,9 @@ const SmartInventoryTracker = () => {
       quantity: newGrocery.quantity,
       expiration_date: newGrocery.expiration_date,
     };
-  
+
     try {
-      const response = await apiCall('/groceries', {
+      const response = await apiCall('/groceries/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,7 +50,7 @@ const SmartInventoryTracker = () => {
       });
       
       if (response.status === 200) {
-        setGroceries((prevGroceries) => [...prevGroceries, response.data]); 
+        setGroceries((prevGroceries) => [...prevGroceries, response.data]);
         setNewGrocery({ name: '', quantity: '', expiration_date: '' });
       } else {
         console.error('Failed to add grocery item');
@@ -70,7 +71,7 @@ const SmartInventoryTracker = () => {
           "Authorization": `Bearer ${token}`,
         },
       });
-      
+
       if (response.status === 200) {
         const updatedGrocery = response.data; 
         const updatedGroceryList = groceries.map(grocery =>
@@ -91,35 +92,26 @@ const SmartInventoryTracker = () => {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      fetchGroceries(); 
+      setGroceries((prevGroceries) => prevGroceries.filter(grocery => grocery.id !== id));
     } catch (error) {
       console.error('Error deleting grocery item:', error);
     }
   };
 
-  const handleSearch = () => {
-    fetchGroceries(); // Trigger the fetch when search is executed
-  };
-
-  const handleSearchKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
   };
 
   const handleSort = (option) => {
     setSortOption(option);
-    fetchGroceries(); // Fetch groceries after sorting
   };
 
   const handleFilterToday = () => {
     setFilterByToday(true);
-    fetchGroceries(); // Fetch groceries after filtering by today
   };
-  
+
   const handleResetFilter = () => {
     setFilterByToday(false);
-    fetchGroceries(); // Reset filter and fetch groceries
   };
 
   // Dynamically compute the filtered and sorted groceries
@@ -176,11 +168,9 @@ const SmartInventoryTracker = () => {
       <input
         type="text"
         value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        onKeyDown={handleSearchKeyDown} 
+        onChange={handleSearch}
         placeholder="Search by name"
       />
-      <button onClick={handleSearch}>Search</button>
 
       {/* Sorting Dropdown */}
       <select onChange={(e) => handleSort(e.target.value)} value={sortOption}>
@@ -194,8 +184,7 @@ const SmartInventoryTracker = () => {
       <button onClick={handleFilterToday}>
         {filterByToday ? "Show All" : "Show Expiring Today"}
       </button>
-      
-      {/* Add Reset Filter Button */}
+
       <button onClick={handleResetFilter}>Reset Filter</button>
 
       {/* Grocery List */}

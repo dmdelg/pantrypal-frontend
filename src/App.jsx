@@ -23,7 +23,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/smart-inventory" element={<SmartInventoryTracker />} />
-              <Route path="/smart-inventory" element={<RecipeEntry />} />
+              <Route path="/user-generated-recipe" element={<RecipeEntry />} />
             </Routes>
           </main>
         </div>
