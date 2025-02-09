@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import axios from "axios"; // Import axios
 import { useAuth } from "../context/AuthContext"; 
 import { format } from "date-fns";
+import { apiCall } from "../services/api";
 
 const SmartInventoryTracker = () => {
   const { token } = useAuth(); 
@@ -15,7 +16,7 @@ const SmartInventoryTracker = () => {
   // Fetch groceries when triggered by buttons or actions
   const fetchGroceries = useCallback(async () => {
     try {
-      const response = await axios.get('/groceries/', {
+      const response = await apiCall('/groceries/', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setGroceries(response.data.groceries);
@@ -38,11 +39,13 @@ const SmartInventoryTracker = () => {
     };
   
     try {
-      const response = await axios.post('/groceries', newItem, {
+      const response = await apiCall('/groceries', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
+        data: newItem,
       });
       
       if (response.status === 200) {
@@ -59,10 +62,9 @@ const SmartInventoryTracker = () => {
   const handleUpdate = async (id) => {
     const formattedExpirationDate = format(new Date(updateGrocery.expiration_date), 'MM-dd-yyyy');
     try {
-      const response = await axios.put(`/groceries/${id}`, {
-        ...updateGrocery,
-        expiration_date: formattedExpirationDate,
-      }, {
+      const response = await apiCall(`/groceries/${id}`, {
+        method: 'PUT',
+        data: { ...updateGrocery, expiration_date: formattedExpirationDate },
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
@@ -85,7 +87,8 @@ const SmartInventoryTracker = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/groceries/${id}`, {
+      await apiCall(`/groceries/${id}`, {
+        method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchGroceries(); 
