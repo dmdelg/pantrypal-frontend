@@ -146,20 +146,36 @@ const SmartInventoryTracker = () => {
     }
   };
 
+  // Handle sorting option change
   const handleSortChange = (e) => {
-    const sortValue = e.target.value;
-    setSortOption(sortValue);
+    const [option, direction] = e.target.value.split('-');
+    setSortOption(option);
+    setSortDirection(direction);
+  };
 
-    let sortedGroceries;
-    if (sortValue === 'name') {
-      sortedGroceries = [...groceries].sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortValue === 'quantity') {
-      sortedGroceries = [...groceries].sort((a, b) => a.quantity - b.quantity);
-    } else {
-      sortedGroceries = [...groceries];
+  // Sort groceries based on selected option and direction
+  const sortGroceries = () => {
+    let sortedGroceries = [...groceries];
+
+    if (sortOption === "name") {
+      sortedGroceries.sort((a, b) => {
+        if (sortDirection === "asc") {
+          return a.name.localeCompare(b.name);
+        } else {
+          return b.name.localeCompare(a.name);
+        }
+      });
+    } else if (sortOption === "quantity") {
+      sortedGroceries.sort((a, b) => {
+        if (sortDirection === "asc") {
+          return a.quantity - b.quantity;
+        } else {
+          return b.quantity - a.quantity;
+        }
+      });
     }
 
-    setGroceries(sortedGroceries);
+    return sortedGroceries;
   };
 
   return (
@@ -203,10 +219,13 @@ const SmartInventoryTracker = () => {
       <button onClick={() => setExpiringSoonGroceries(true)}>Expiring Soon</button>
       <button onClick={() => setExpiredGroceries(true)}>Expired Items</button>
   
-      <select onChange={handleSortChange} value={sortOption}>
-        <option value="none">Sort By</option>
-        <option value="name">Name</option>
-        <option value="quantity">Quantity</option>
+      {/* Sorting Option Dropdown */}
+      <select onChange={handleSortChange} value={`${sortOption}-${sortDirection}`}>
+        <option value="none-asc">Sort By</option>
+        <option value="name-asc">Name (A-Z)</option>
+        <option value="name-desc">Name (Z-A)</option>
+        <option value="quantity-asc">Quantity (Low to High)</option>
+        <option value="quantity-desc">Quantity (High to Low)</option>
       </select>
   
       <div>
@@ -233,7 +252,46 @@ const SmartInventoryTracker = () => {
           </div>
         ))}
       </div>
-  
+
+      {/* Update Grocery Form (Conditional Rendering) */}
+      {updateGrocery.id && (
+        <div>
+          <h2>Update Grocery</h2>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleUpdate(updateGrocery.id);
+            }}
+          >
+            <input
+              type="text"
+              value={updateGrocery.name}
+              onChange={(e) => setUpdateGrocery({ ...updateGrocery, name: e.target.value })}
+              placeholder="Name"
+              required
+            />
+            <input
+              type="text"
+              value={updateGrocery.quantity}
+              onChange={(e) => setUpdateGrocery({ ...updateGrocery, quantity: e.target.value })}
+              placeholder="Quantity"
+              required
+            />
+            <input
+              type="date"
+              value={updateGrocery.expiration_date}
+              onChange={(e) => setUpdateGrocery({ ...updateGrocery, expiration_date: e.target.value })}
+              required
+            />
+            <button type="submit">Update Grocery</button>
+            <button type="button" onClick={() => setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' })}>
+              Cancel
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Expiring Soon Groceries */}
       {expiringSoonGroceries.length > 0 && (
         <div>
           <h2>Expiring Soon</h2>
@@ -246,7 +304,8 @@ const SmartInventoryTracker = () => {
           </ul>
         </div>
       )}
-  
+
+      {/* Expired Groceries */}
       {expiredGroceries.length > 0 && (
         <div>
           <h2>Expired Items</h2>
@@ -261,4 +320,6 @@ const SmartInventoryTracker = () => {
       )}
     </div>
   );
-  
+};
+
+export default SmartInventoryTracker;
