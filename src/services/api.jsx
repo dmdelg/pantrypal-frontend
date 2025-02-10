@@ -3,12 +3,9 @@ import axios from 'axios';
 const BASE_URL = 'https://pantrypal-backend.onrender.com';
 
 export const apiCall = async (url, options = {}, token = '') => {
-  // If no token is passed in, retrieve from localStorage
-  const storedToken = token || localStorage.getItem('token');
-
   const headers = {
     'Content-Type': 'application/json',
-    ...(storedToken && { Authorization: `Bearer ${storedToken}` }),
+    Authorization: `Bearer ${token}`,  // Directly use the passed token
     ...options.headers,
   };
 
