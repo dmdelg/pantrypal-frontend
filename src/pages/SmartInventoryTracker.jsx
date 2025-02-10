@@ -11,21 +11,6 @@ const SmartInventoryTracker = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('name-asc');
 
-  const formatDate = (dateString, toFormat) => {
-    if (!dateString) return '';
-  
-    if (toFormat === 'input') {
-      const [month, day, year] = dateString.split('-');  // MM-dd-yyyy → yyyy-MM-dd
-      return `${year}-${month}-${day}`;
-    } else if (toFormat === 'backend') {
-      const [year, month, day] = dateString.split('-');  // yyyy-MM-dd → MM-dd-yyyy
-      return `${month}-${day}-${year}`;
-    }
-  
-    return dateString;  
-  };
-
-
   useEffect(() => {
     if (!token) return;
 
@@ -47,7 +32,7 @@ const SmartInventoryTracker = () => {
     const newItem = {
       name: newGrocery.name,
       quantity: Number(newGrocery.quantity),
-      expiration_date: formatDate(newGrocery.expiration_date,'backend'),
+      expiration_date: newGrocery.expiration_date,
     };
 
     try {
@@ -182,7 +167,7 @@ const SmartInventoryTracker = () => {
         />
         <input
           type="date"
-          value={formatDate(newGrocery.expiration_date, 'input')}
+          value={(newGrocery.expiration_date)}
           onChange={(e) => setNewGrocery({ ...newGrocery, expiration_date: e.target.value })}
           required
         />
@@ -217,7 +202,7 @@ const SmartInventoryTracker = () => {
           <div key={grocery.id}>
             <p>{grocery.name}</p>
             <p>Quantity: {grocery.quantity}</p>
-            <p>Expiration Date: {formatDate(grocery.expiration_date, 'backend')}</p>
+            <p>Expiration Date: {grocery.expiration_date}</p>
   
             {/* Update Button */}
             <button onClick={() => setUpdateGrocery({
@@ -263,7 +248,7 @@ const SmartInventoryTracker = () => {
             />
             <input
               type="date"
-              value={formatDate(updateGrocery.expiration_date, 'input')}
+              value={updateGrocery.expiration_date}
               onChange={(e) => setUpdateGrocery({ ...updateGrocery, expiration_date: e.target.value })}
               required
             />
