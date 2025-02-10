@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useAuth } from "../context/AuthContext";
-import { apiCall } from "../services/api";
+import axios from "axios"; // Import axios
 
 const SmartInventoryTracker = () => {
   const { token } = useAuth();
@@ -18,7 +18,7 @@ const SmartInventoryTracker = () => {
 
     const fetchGroceries = async () => {
       try {
-        const response = await apiCall('/groceries', {
+        const response = await axios.get('/groceries', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setGroceries(response.data.groceries);
@@ -42,13 +42,11 @@ const SmartInventoryTracker = () => {
     };
 
     try {
-      const response = await apiCall('/groceries', {
-        method: 'POST',
+      const response = await axios.post('/groceries', newItem, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        data: newItem,
       });
 
       if (response.status === 201) {
@@ -63,9 +61,10 @@ const SmartInventoryTracker = () => {
   const handleUpdate = async (id) => {
     const formattedExpirationDate = format(new Date(updateGrocery.expiration_date), 'MM-dd-yyyy');
     try {
-      const response = await apiCall(`/groceries/${id}`, {
-        method: 'PUT',
-        data: { ...updateGrocery, expiration_date: formattedExpirationDate },
+      const response = await axios.put(`/groceries/${id}`, {
+        ...updateGrocery,
+        expiration_date: formattedExpirationDate,
+      }, {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
@@ -86,8 +85,7 @@ const SmartInventoryTracker = () => {
 
   const handleDelete = async (id) => {
     try {
-      await apiCall(`/groceries/${id}`, {
-        method: 'DELETE',
+      await axios.delete(`/groceries/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setGroceries((prevGroceries) => prevGroceries.filter(grocery => grocery.id !== id));
@@ -103,7 +101,7 @@ const SmartInventoryTracker = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     // Search functionality tied to the search route for grocery items by name
-    apiCall(`/groceries/name/${searchQuery}`, {
+    axios.get(`/groceries/name/${searchQuery}`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(response => {
       setGroceries(response.data.groceries);

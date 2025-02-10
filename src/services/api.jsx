@@ -1,31 +1,68 @@
-import axios from 'axios';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { apiCall } from '../services/api'; 
 
-const BASE_URL = 'https://pantrypal-backend.onrender.com';
+const SignUp = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate(); 
 
-export const apiCall = async (url, options = {}, token = '') => {
-  // If no token is passed in, retrieve from localStorage
-  const storedToken = token || localStorage.getItem('token');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(storedToken && { Authorization: `Bearer ${storedToken}` }),
-    ...options.headers,
+    const signUpData = {
+      email,
+      password,
+    };
+
+    try {
+      const response = await apiCall('/auth/register', {
+        method: 'POST',
+        data: signUpData,  
+      });
+
+      if (response?.status >= 200 && response?.status < 300) {
+        console.log('User registered successfully');
+        navigate('/login');
+      } else {
+        setError(response?.details || 'Sign up failed');
+      }
+    } catch (err) {
+      console.error('Error during sign up:', err);
+      setError(err?.message || 'An error occurred during sign up');
+    }
   };
 
-  try {
-    const response = await axios(`${BASE_URL}${url}`, {
-      ...options,
-      headers,
-      withCredentials: true,
-    });
-
-    if (response.status < 200 || response.status >= 300) {
-      throw new Error('Something went wrong!');
-    }
-
-    return response.data;
-  } catch (error) {
-    console.error('Error during API call:', error);
-    throw new Error(error.message || 'An unknown error occurred');
-  }
+  return (
+    <div className="signup-container">
+      <h2>Sign Up</h2>
+      {error && <p className="error">{error}</p>} {/* Display error */}
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label htmlFor="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit">Sign Up</button>
+      </form>
+    </div>
+  );
 };
+
+export default SignUp;
