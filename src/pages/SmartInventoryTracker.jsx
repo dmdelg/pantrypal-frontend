@@ -67,7 +67,7 @@ const SmartInventoryTracker = () => {
       });
 
       if (response.status === 200) {
-        const updatedGrocery = response.data;
+        const updatedGrocery = response.data.grocery;
         const updatedGroceryList = groceries.map(grocery =>
           grocery.id === updatedGrocery.id ? updatedGrocery : grocery
         );
