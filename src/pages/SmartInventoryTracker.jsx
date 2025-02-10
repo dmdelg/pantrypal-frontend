@@ -16,7 +16,7 @@ const SmartInventoryTracker = () => {
   useEffect(() => {
     const fetchGroceries = async () => {
       try {
-        const response = await apiCall('/groceries/', {
+        const response = await apiCall('/groceries', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setGroceries(response.data.groceries);
@@ -40,7 +40,7 @@ const SmartInventoryTracker = () => {
     };
     
     try {
-      const response = await apiCall('/groceries/', {
+      const response = await apiCall('/groceries', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

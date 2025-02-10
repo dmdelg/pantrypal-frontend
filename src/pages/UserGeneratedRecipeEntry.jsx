@@ -24,7 +24,7 @@ const MyRecipes = () => {
   // Fetch user's recipes on demand
   const fetchRecipes = async () => {
     try {
-      const response = await axios.get('/recipes/', {
+      const response = await axios.get('/recipes', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setRecipes(response.data.recipes);
@@ -85,7 +85,7 @@ const MyRecipes = () => {
         setEditingId(null);
       } else {
         // Create new recipe
-        await axios.post('/recipes/', recipe, {
+        await axios.post('/recipes', recipe, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
