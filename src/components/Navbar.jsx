@@ -3,12 +3,11 @@ import { useAuth } from "../context/useAuth";
 import './Navbar.css';
 
 function Navbar() {
-  const { token, setToken } = useAuth();
+  const { token, logout } = useAuth();
   const navigate = useNavigate(); 
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
+    logout();
     navigate('/login');
   };
 

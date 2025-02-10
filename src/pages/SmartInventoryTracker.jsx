@@ -15,14 +15,14 @@ const SmartInventoryTracker = () => {
     if (!dateString) return '';
   
     if (toFormat === 'input') {
-      const [month, day, year] = dateString.split('-'); // MM-dd-yyyy → yyyy-MM-dd
+      const [month, day, year] = dateString.split('-');  // MM-dd-yyyy → yyyy-MM-dd
       return `${year}-${month}-${day}`;
     } else if (toFormat === 'backend') {
-      const [year, month, day] = dateString.split('-'); // yyyy-MM-dd → MM-dd-yyyy
+      const [year, month, day] = dateString.split('-');  // yyyy-MM-dd → MM-dd-yyyy
       return `${month}-${day}-${year}`;
     }
   
-    return dateString; 
+    return dateString;  
   };
 
 
