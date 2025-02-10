@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios"; // Import axios
+import axios from 'axios';
 
 const SmartInventoryTracker = () => {
   const { token } = useAuth();
