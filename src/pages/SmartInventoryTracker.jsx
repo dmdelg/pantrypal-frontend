@@ -50,22 +50,13 @@ const SmartInventoryTracker = () => {
       });
 
       if (response.status === 201) {
-        console.log('Response data:', response.data); // Debugging line
-  
-        // Check the structure of response.data
-        const addedGrocery = response.data.grocery;
-        if (addedGrocery) {
-          setGroceries((prevGroceries) => [...prevGroceries, addedGrocery]);
-        }
-  
-        setNewGrocery({ name: '', quantity: '', expiration_date: '' });
-      } else {
-        console.error('Failed to add grocery item');
+        setGroceries(prevGroceries => [...prevGroceries, response.data.grocery]);
       }
     } catch (error) {
-      console.error('Error adding grocery item:', error);
+      console.error("Failed to add grocery item", error);
     }
   };
+
   const handleUpdate = async (id) => {
     const formattedExpirationDate = format(new Date(updateGrocery.expiration_date), 'MM-dd-yyyy');
     try {
@@ -84,8 +75,6 @@ const SmartInventoryTracker = () => {
           grocery.id === updatedGrocery.id ? updatedGrocery : grocery
         );
         setGroceries(updatedGroceryList);
-      } else {
-        console.error("Error:", response.data.message);
       }
     } catch (error) {
       console.error("Error updating grocery:", error);
@@ -104,8 +93,13 @@ const SmartInventoryTracker = () => {
     }
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     setSearchQuery(e.target.value);
+  };
+
+  const handleSearchSubmit = async (e) => {
+    e.preventDefault();  // Prevent form submission behavior
+    if (!searchQuery.trim()) return;  // Don't search if query is empty
   };
 
   const handleSort = (option) => {
@@ -120,11 +114,13 @@ const SmartInventoryTracker = () => {
     setFilterByToday(false);
   };
 
-  // Dynamically compute the filtered and sorted groceries
+  // Filter and Sort logic (front-end only)
   const filteredGroceries = groceries
     .filter(grocery => 
-      grocery.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
       (!filterByToday || formatDate(grocery.expiration_date) === format(new Date(), 'MM-dd-yyyy'))
+    )
+    .filter(grocery => 
+      grocery.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => {
       switch (sortOption) {
@@ -171,12 +167,14 @@ const SmartInventoryTracker = () => {
       </form>
 
       {/* Search Section */}
-      <input
-        type="text"
-        value={searchQuery}
-        onChange={handleSearch}
-        placeholder="Search by name"
-      />
+      <form onSubmit={handleSearchSubmit}>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={handleSearch}
+          placeholder="Search by name"
+        />
+      </form>
 
       {/* Sorting Dropdown */}
       <select onChange={(e) => handleSort(e.target.value)} value={sortOption}>
@@ -187,6 +185,7 @@ const SmartInventoryTracker = () => {
         <option value="expiration_date">Expiration Date</option>
       </select>
 
+      {/* Filter and Reset Buttons */}
       <button onClick={handleFilterToday}>
         {filterByToday ? "Show All" : "Show Expiring Today"}
       </button>
