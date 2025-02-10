@@ -13,9 +13,8 @@ const SmartInventoryTracker = () => {
   const [expiredGroceries, setExpiredGroceries] = useState([]);
   const [sortOption, setSortOption] = useState('none');
 
-  // Fetch groceries data
   useEffect(() => {
-    if (!token) return;  
+    if (!token) return;
 
     const fetchGroceries = async () => {
       try {
@@ -108,63 +107,54 @@ const SmartInventoryTracker = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = response.data;
-      setGroceries(data.groceries); 
-      setFilteredGroceries(data.groceries);
+      setGroceries(data.groceries);
     } catch (error) {
       console.error("Error during search:", error);
     }
   };
+
   useEffect(() => {
-    if (token) {
-      const fetchGroceries = async () => {
-        try {
-          const response = await apiCall('/check-expirations', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+    if (!token) return;
 
-          // Split response data into expiring soon and expired items
-          const expiringSoonItems = response.data.expiringSoonGroceries || [];
-          const expiredItems = response.data.expiredGroceries || [];
+    const fetchExpirations = async () => {
+      try {
+        const response = await apiCall('/check-expirations', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-          setExpiringSoonGroceries(expiringSoonItems);
-          setExpiredGroceries(expiredItems);
-        } catch (error) {
-          console.error('Error fetching groceries:', error);
-        }
-      };
+        const { expiringSoonGroceries, expiredGroceries } = response.data;
 
-      fetchGroceries();
-    }
+        setExpiringSoonGroceries(expiringSoonGroceries || []);
+        setExpiredGroceries(expiredGroceries || []);
+      } catch (error) {
+        console.error('Error fetching groceries:', error);
+      }
+    };
+
+    fetchExpirations();
   }, [token]);
 
-  // Handle Show All button click
-  const handleShowAll = () => {
-    fetchAllGroceries();  // Fetch all groceries
-    setSortOption('none'); // Reset sorting when showing all
-  };
-
-  // Fetch all groceries (to be used in the show all function)
-  const fetchAllGroceries = async () => {
+  const handleShowAll = async () => {
     try {
       const response = await apiCall('/groceries', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setGroceries(response.data.groceries);
+      setSortOption('none');
     } catch (error) {
       console.error('Error fetching groceries:', error);
     }
   };
 
-  // Handle sorting
   const handleSortChange = (e) => {
     const sortValue = e.target.value;
     setSortOption(sortValue);
 
     let sortedGroceries;
     if (sortValue === 'name') {
-      sortedGroceries = [...groceries].sort((a, b) => a.name.localeCompare(b.name)); // Sort by name
+      sortedGroceries = [...groceries].sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortValue === 'quantity') {
-      sortedGroceries = [...groceries].sort((a, b) => a.quantity - b.quantity); // Sort by quantity
+      sortedGroceries = [...groceries].sort((a, b) => a.quantity - b.quantity);
     } else {
       sortedGroceries = [...groceries];
     }
@@ -172,26 +162,53 @@ const SmartInventoryTracker = () => {
     setGroceries(sortedGroceries);
   };
 
-
   return (
     <div>
-      {/* Show All and Expiring Soon Buttons */}
+      <h1>Smart Inventory Tracker</h1>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          value={newGrocery.name}
+          onChange={(e) => setNewGrocery({ ...newGrocery, name: e.target.value })}
+          placeholder="Name"
+          required
+        />
+        <input
+          type="text"
+          value={newGrocery.quantity}
+          onChange={(e) => setNewGrocery({ ...newGrocery, quantity: e.target.value })}
+          placeholder="Quantity"
+          required
+        />
+        <input
+          type="date"
+          value={newGrocery.expiration_date}
+          onChange={(e) => setNewGrocery({ ...newGrocery, expiration_date: e.target.value })}
+          required
+        />
+        <button type="submit">Add Grocery</button>
+      </form>
+
+      <form onSubmit={handleSearchSubmit}>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by name"
+        />
+        <button type="submit">Search</button>
+      </form>
+
       <button onClick={handleShowAll}>Show All</button>
       <button onClick={() => setExpiringSoonGroceries(true)}>Expiring Soon</button>
       <button onClick={() => setExpiredGroceries(true)}>Expired Items</button>
 
-      {/* If Show All is selected, display Sort By Dropdown */}
-      {groceries.length > 0 && (
-        <div>
-          <select onChange={handleSortChange} value={sortOption}>
-            <option value="none">Sort By</option>
-            <option value="name">Name</option>
-            <option value="quantity">Quantity</option>
-          </select>
-        </div>
-      )}
+      <select onChange={handleSortChange} value={sortOption}>
+        <option value="none">Sort By</option>
+        <option value="name">Name</option>
+        <option value="quantity">Quantity</option>
+      </select>
 
-      {/* Display groceries */}
       <div>
         {groceries.map(grocery => (
           <div key={grocery.id}>
@@ -202,7 +219,6 @@ const SmartInventoryTracker = () => {
         ))}
       </div>
 
-      {/* Displaying filtered expiring soon and expired groceries */}
       {expiringSoonGroceries.length > 0 && (
         <div>
           <h2>Expiring Soon</h2>
@@ -233,4 +249,3 @@ const SmartInventoryTracker = () => {
 };
 
 export default SmartInventoryTracker;
- 
