@@ -50,6 +50,7 @@ const SmartInventoryTracker = () => {
 
       if (response.status === 201) {
         setGroceries(prevGroceries => [...prevGroceries, response.data.grocery]);
+        setNewGrocery({ name: '', quantity: '', expiration_date: '' });
       }
     } catch (error) {
       console.error("Failed to add grocery item", error);
@@ -111,22 +112,12 @@ const SmartInventoryTracker = () => {
   };
 
   const handleFilterChange = (e) => {
-    if (e.target.value === "expiring_today") {
-      setFilterByToday(true);
-      apiCall("/groceries/check-expirations", {
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch((error) => console.error("Error fetching expiring groceries:", error));
-    } else {
-      setFilterByToday(false);
-      apiCall("/groceries", {
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch((error) => console.error("Error fetching all groceries:", error));
-    }
+    setFilterByToday(e.target.value === "expiring_today");
   };
 
   const filteredGroceries = groceries
     .filter(grocery => 
-      (!filterByToday || formatDate(grocery.expiration_date) === format(new Date(), 'MM-dd-yyyy'))
+      !filterByToday || formatDate(grocery.expiration_date) === format(new Date(), 'MM-dd-yyyy')
     )
     .filter(grocery => 
       grocery.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -202,7 +193,7 @@ const SmartInventoryTracker = () => {
       </select>
 
       {/* Grocery List */}
-      {filteredGroceries.length === 0 && searchQuery === "" ? (
+      {filteredGroceries.length === 0 ? (
         <p>No groceries found. Please search or add groceries.</p>
       ) : (
         <ul>
