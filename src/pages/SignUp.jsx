@@ -1,65 +1,54 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiCall } from '../services/api'; 
+import { apiCall } from './api'; // Import your apiCall function
 
 const SignUp = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const signUpData = {
-      email,
-      password,
-    };
-
     try {
       const response = await apiCall('/auth/register', {
         method: 'POST',
-        data: signUpData,  
+        data: { email, password },
       });
 
-      if (response?.status >= 200 && response?.status < 300) {
-        console.log('User registered successfully');
+      // If the registration is successful, redirect to login page
+      if (response.message) {
         navigate('/login');
-      } else {
-        setError(response?.details || 'Sign up failed');
       }
-    } catch (err) {
-      console.error('Error during sign up:', err);
-      setError(err?.message || 'An error occurred during sign up');
+    } catch (error) {
+      setError(error.message || 'Something went wrong');
     }
   };
 
   return (
-    <div className="signup-container">
+    <div>
       <h2>Sign Up</h2>
-      {error && <p className="error">{error}</p>} {/* Display error */}
       <form onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="email">Email</label>
+          <label>Email:</label>
           <input
             type="email"
-            id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
         <div>
-          <label htmlFor="password">Password</label>
+          <label>Password:</label>
           <input
             type="password"
-            id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
-        <button type="submit">Sign Up</button>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <button type="submit">Sign Upr</button>
       </form>
     </div>
   );
