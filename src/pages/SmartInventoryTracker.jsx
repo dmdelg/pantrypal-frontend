@@ -9,10 +9,8 @@ const SmartInventoryTracker = () => {
   const [newGrocery, setNewGrocery] = useState({ name: '', quantity: '', expiration_date: '' });
   const [updateGrocery, setUpdateGrocery] = useState({ id: null, name: '', quantity: '', expiration_date: '' });
   const [searchQuery, setSearchQuery] = useState('');
-  const [expiringSoonGroceries, setExpiringSoonGroceries] = useState([]);
-  const [expiredGroceries, setExpiredGroceries] = useState([]);
-  const [sortOption, setSortOption] = useState('none');
-  const [sortDirection, setSortDirection] = useState('asc');
+  const [sortOption, setSortOption] = useState('name-asc');
+
 
   useEffect(() => {
     if (!token) return;
@@ -114,26 +112,6 @@ const SmartInventoryTracker = () => {
     }
   };
 
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchExpirations = async () => {
-      try {
-        const response = await apiCall('/check-expirations', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const { expiringSoonGroceries, expiredGroceries } = response.data;
-
-        setExpiringSoonGroceries(expiringSoonGroceries || []);
-        setExpiredGroceries(expiredGroceries || []);
-      } catch (error) {
-        console.error('Error fetching groceries:', error);
-      }
-    };
-
-    fetchExpirations();
-  }, [token]);
 
   const handleShowAll = async () => {
     try {
@@ -141,7 +119,7 @@ const SmartInventoryTracker = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setGroceries(response.data.groceries);
-      setSortOption('none');
+      setSortOption('none-asc');
     } catch (error) {
       console.error('Error fetching groceries:', error);
     }
@@ -149,36 +127,31 @@ const SmartInventoryTracker = () => {
 
   // Handle sorting option change
   const handleSortChange = (e) => {
-    const [option, direction] = e.target.value.split('-');
-    setSortOption(option);
-    setSortDirection(direction);
+    setSortOption(e.target.value);
   };
 
-  // Sort groceries based on selected option and direction
   const sortGroceries = () => {
     let sortedGroceries = [...groceries];
+    
+    const [option, direction] = sortOption.split('-'); // Extract option and direction
+    
+    const sortOptions = {
+        name: (a, b) => direction === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name),
+        quantity: (a, b) => direction === "asc" ? a.quantity - b.quantity : b.quantity - a.quantity,
+        expiration: (a, b) => {
+            const dateA = new Date(a.expiration_date);
+            const dateB = new Date(b.expiration_date);
+            return direction === "asc" ? dateA - dateB : dateB - dateA;
+        },
+    };
 
-    if (sortOption === "name") {
-      sortedGroceries.sort((a, b) => {
-        if (sortDirection === "asc") {
-          return a.name.localeCompare(b.name);
-        } else {
-          return b.name.localeCompare(a.name);
-        }
-      });
-    } else if (sortOption === "quantity") {
-      sortedGroceries.sort((a, b) => {
-        if (sortDirection === "asc") {
-          return a.quantity - b.quantity;
-        } else {
-          return b.quantity - a.quantity;
-        }
-      });
+    if (sortOptions[option]) {
+        sortedGroceries.sort(sortOptions[option]); // Sort using the mapped function
     }
 
     return sortedGroceries;
   };
-
+  
   return (
     <div>
       <h1>Smart Inventory Tracker</h1>
@@ -217,16 +190,16 @@ const SmartInventoryTracker = () => {
       </form>
   
       <button onClick={handleShowAll}>Show All</button>
-      <button onClick={handleShowExpiringSoon}>Expiring Soon</button>
-      <button onClick={handleShowExpired}>Expired Items</button>
   
       {/* Sorting Option Dropdown */}
-      <select onChange={handleSortChange} value={`${sortOption}-${sortDirection}`}>
+      <select onChange={handleSortChange} value={sortOption}>
         <option value="none-asc">Sort By</option>
         <option value="name-asc">Name (A-Z)</option>
         <option value="name-desc">Name (Z-A)</option>
         <option value="quantity-asc">Quantity (Low to High)</option>
         <option value="quantity-desc">Quantity (High to Low)</option>
+        <option value="expiration-asc">Expiration Date (Soonest First)</option>
+        <option value="expiration-desc">Expiration Date (Latest First)</option>
       </select>
   
       <div>
@@ -289,34 +262,6 @@ const SmartInventoryTracker = () => {
               Cancel
             </button>
           </form>
-        </div>
-      )}
-
-      {/* Expiring Soon Groceries */}
-      {expiringSoonGroceries.length > 0 && (
-        <div>
-          <h2>Expiring Soon</h2>
-          <ul>
-            {expiringSoonGroceries.map(grocery => (
-              <li key={grocery.id}>
-                {grocery.name} - {grocery.quantity} - {grocery.expiration_date}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Expired Groceries */}
-      {expiredGroceries.length > 0 && (
-        <div>
-          <h2>Expired Items</h2>
-          <ul>
-            {expiredGroceries.map(grocery => (
-              <li key={grocery.id}>
-                {grocery.name} - {grocery.quantity} - {grocery.expiration_date}
-              </li>
-            ))}
-          </ul>
         </div>
       )}
     </div>
