@@ -12,6 +12,7 @@ const SmartInventoryTracker = () => {
   const [expiringSoonGroceries, setExpiringSoonGroceries] = useState([]);
   const [expiredGroceries, setExpiredGroceries] = useState([]);
   const [sortOption, setSortOption] = useState('none');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
     if (!token) return;
@@ -216,8 +217,8 @@ const SmartInventoryTracker = () => {
       </form>
   
       <button onClick={handleShowAll}>Show All</button>
-      <button onClick={() => setExpiringSoonGroceries(true)}>Expiring Soon</button>
-      <button onClick={() => setExpiredGroceries(true)}>Expired Items</button>
+      <button onClick={handleShowExpiringSoon}>Expiring Soon</button>
+      <button onClick={handleShowExpired}>Expired Items</button>
   
       {/* Sorting Option Dropdown */}
       <select onChange={handleSortChange} value={`${sortOption}-${sortDirection}`}>
@@ -229,7 +230,7 @@ const SmartInventoryTracker = () => {
       </select>
   
       <div>
-        {groceries.map(grocery => (
+        {sortGroceries().map(grocery => (
           <div key={grocery.id}>
             <p>{grocery.name}</p>
             <p>Quantity: {grocery.quantity}</p>
