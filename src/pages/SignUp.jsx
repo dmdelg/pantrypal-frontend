@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiCall } from '../services/api'; 
 
-
 const SignUp = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,23 +19,19 @@ const SignUp = () => {
     try {
       const response = await apiCall('/auth/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         data: signUpData,
       });
       
-      const data = response;
-
-      if (response.ok) {
+      // Check if the registration was successful based on the response status
+      if (response.status >= 200 && response.status < 300) {
         console.log('User registered successfully');
         navigate('/login');
       } else {
-        setError(data.details || 'Sign up failed'); 
+        setError(response.details || 'Sign up failed');
       }
     } catch (err) {
       console.error('Error during sign up:', err);
-      setError('An error occurred during sign up');
+      setError(err.message || 'An error occurred during sign up');
     }
   };
 

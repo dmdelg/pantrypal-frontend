@@ -22,42 +22,42 @@ const MyRecipes = () => {
   const [sortBy, setSortBy] = useState('name');
 
   // Fetch user's recipes on demand
-  const fetchRecipes = async () => {
-    try {
-      const response = await axios.get('/recipes', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setRecipes(response.data.recipes);
-      setFilteredRecipes(response.data.recipes);
-    } catch (err) {
-      setError(`Error fetching recipes: ${err.message}`);
-      console.error('Error fetching recipes:', err);
-    }
-  };
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        const response = await axios.get('/recipes', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setRecipes(response.data.recipes);
+        setFilteredRecipes(response.data.recipes);
+      } catch (err) {
+        setError(`Error fetching recipes: ${err.message}`);
+        console.error('Error fetching recipes:', err);
+      }
+    };
 
-  // Search handler
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
+    fetchRecipes();
+  }, [token]);
 
-  const handleSearch = () => {
-    const filtered = recipes.filter((recipe) =>
-      recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredRecipes(filtered);
-  };
+  // Search handler with debouncing
+  useEffect(() => {
+    const debounceSearch = setTimeout(() => {
+      const filtered = recipes.filter((recipe) =>
+        recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredRecipes(filtered);
+    }, 300); // 300ms debounce delay
+
+    return () => clearTimeout(debounceSearch);
+  }, [searchQuery, recipes]);
 
   // Sort handler
-  const handleSortChange = (e) => {
-    setSortBy(e.target.value);
-  };
-
   useEffect(() => {
-    let sortedRecipes;
+    let sortedRecipes = [...filteredRecipes];
     if (sortBy === 'name') {
-      sortedRecipes = [...filteredRecipes].sort((a, b) => a.title.localeCompare(b.title));
+      sortedRecipes.sort((a, b) => a.title.localeCompare(b.title));
     } else if (sortBy === 'date') {
-      sortedRecipes = [...filteredRecipes].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      sortedRecipes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
     setFilteredRecipes(sortedRecipes);
   }, [sortBy, filteredRecipes]);
@@ -90,7 +90,6 @@ const MyRecipes = () => {
         });
       }
 
-      fetchRecipes(); // Refresh recipe list
       setRecipe({
         title: '',
         ingredients: '',
@@ -100,6 +99,7 @@ const MyRecipes = () => {
         carbs: '',
         fat: ''
       });
+      fetchRecipes(); // Refresh recipe list after save
     } catch (err) {
       setError('Error saving recipe.');
     }
@@ -129,18 +129,16 @@ const MyRecipes = () => {
       <h1>My Recipes</h1>
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      {/* Search Input and Button */}
+      {/* Search Input */}
       <input
         type="text"
         placeholder="Search recipes by name"
         value={searchQuery}
-        onChange={handleSearchChange}
-        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+        onChange={(e) => setSearchQuery(e.target.value)}
       />
-      <button onClick={handleSearch}>Search</button>
-
+      
       {/* Sort Dropdown */}
-      <select value={sortBy} onChange={handleSortChange}>
+      <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
         <option value="name">Sort by Name</option>
         <option value="date">Sort by Date</option>
       </select>

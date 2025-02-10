@@ -12,7 +12,10 @@ const SmartInventoryTracker = () => {
   const [sortOption, setSortOption] = useState('none');
   const [filterByToday, setFilterByToday] = useState(false);
 
+  // Fetch groceries data
   useEffect(() => {
+    if (!token) return;  // Prevent API call if token is not available
+
     const fetchGroceries = async () => {
       try {
         const response = await apiCall('/groceries', {
@@ -115,6 +118,7 @@ const SmartInventoryTracker = () => {
     setFilterByToday(e.target.value === "expiring_today");
   };
 
+  // Filter and sort groceries
   const filteredGroceries = groceries
     .filter(grocery => 
       !filterByToday || formatDate(grocery.expiration_date) === format(new Date(), 'MM-dd-yyyy')
