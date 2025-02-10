@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useAuth } from "../context/AuthContext";
-import axios from 'axios';
+import { apiCall } from "../services/api";
 
 const SmartInventoryTracker = () => {
   const { token } = useAuth();
@@ -18,7 +18,7 @@ const SmartInventoryTracker = () => {
 
     const fetchGroceries = async () => {
       try {
-        const response = await axios.get('/groceries', {
+        const response = await apiCall('/groceries', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setGroceries(response.data.groceries);
@@ -42,11 +42,13 @@ const SmartInventoryTracker = () => {
     };
 
     try {
-      const response = await axios.post('/groceries', newItem, {
+      const response = await apiCall('/groceries', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
+        data: newItem,
       });
 
       if (response.status === 201) {
@@ -61,14 +63,13 @@ const SmartInventoryTracker = () => {
   const handleUpdate = async (id) => {
     const formattedExpirationDate = format(new Date(updateGrocery.expiration_date), 'MM-dd-yyyy');
     try {
-      const response = await axios.put(`/groceries/${id}`, {
-        ...updateGrocery,
-        expiration_date: formattedExpirationDate,
-      }, {
+      const response = await apiCall(`/groceries/${id}`, {
+        method: 'PUT',
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
+        data: { ...updateGrocery, expiration_date: formattedExpirationDate },
       });
 
       if (response.status === 200) {
@@ -85,10 +86,14 @@ const SmartInventoryTracker = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/groceries/${id}`, {
+      const response = await apiCall(`/groceries/${id}`, {
+        method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      setGroceries((prevGroceries) => prevGroceries.filter(grocery => grocery.id !== id));
+
+      if (response.status === 200) {
+        setGroceries((prevGroceries) => prevGroceries.filter(grocery => grocery.id !== id));
+      }
     } catch (error) {
       console.error('Error deleting grocery item:', error);
     }
@@ -98,14 +103,16 @@ const SmartInventoryTracker = () => {
     setSearchQuery(e.target.value);
   };
 
-  const handleSearchSubmit = (e) => {
+  const handleSearchSubmit = async (e) => {
     e.preventDefault();
-    // Search functionality tied to the search route for grocery items by name
-    axios.get(`/groceries/name/${searchQuery}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(response => {
+    try {
+      const response = await apiCall(`/groceries/name/${searchQuery}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setGroceries(response.data.groceries);
-    }).catch(error => console.error("Error during search:", error));
+    } catch (error) {
+      console.error("Error during search:", error);
+    }
   };
 
   const handleSort = (option) => {
