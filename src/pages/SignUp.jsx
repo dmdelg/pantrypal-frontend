@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiCall } from './api'; // Import your apiCall function
+import { apiCall } from '../services/api'; 
 
 const SignUp = () => {
   const [email, setEmail] = useState('');
