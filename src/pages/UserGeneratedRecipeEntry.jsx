@@ -22,21 +22,21 @@ const MyRecipes = () => {
   const [sortBy, setSortBy] = useState('name');
 
   // Fetch user's recipes on demand
-  useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        const response = await axios.get('/recipes', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setRecipes(response.data.recipes);
-        setFilteredRecipes(response.data.recipes);
-      } catch (err) {
-        setError(`Error fetching recipes: ${err.message}`);
-        console.error('Error fetching recipes:', err);
-      }
-    };
+  const fetchRecipes = async () => {
+    try {
+      const response = await axios.get('/recipes', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRecipes(response.data.recipes);
+      setFilteredRecipes(response.data.recipes);
+    } catch (err) {
+      setError(`Error fetching recipes: ${err.message}`);
+      console.error('Error fetching recipes:', err);
+    }
+  };
 
-    fetchRecipes();
+  useEffect(() => {
+    fetchRecipes(); // Initial fetch
   }, [token]);
 
   // Search handler with debouncing
@@ -117,7 +117,7 @@ const MyRecipes = () => {
       await axios.delete(`/recipes/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      fetchRecipes();
+      fetchRecipes(); // Refresh recipe list after deletion
     } catch (err) {
       setError(`Error deleting recipe: ${err.message}`);
       console.error('Error deleting recipe:', err);

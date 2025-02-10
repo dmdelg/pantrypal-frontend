@@ -9,6 +9,7 @@ import RecipeEntry from './pages/UserGeneratedRecipeEntry';
 import Navbar from './components/Navbar';
 import './App.css';
 import './index.css';
+import MyRecipes from './pages/UserGeneratedRecipeEntry';
 
 function App() {
   return (
@@ -23,7 +24,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/smart-inventory" element={<SmartInventoryTracker />} />
-              <Route path="/user-generated-recipe" element={<RecipeEntry />} />
+              <Route path="/user-generated-recipe" element={<MyRecipes />} />
             </Routes>
           </main>
         </div>
