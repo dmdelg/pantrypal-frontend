@@ -16,7 +16,6 @@ export const apiCall = async (url, options = {}, token = '') => {
     const response = await axios(`${BASE_URL}${url}`, {
       ...options,
       headers,
-      withCredentials: true,
     });
 
     if (response.status < 200 || response.status >= 300) {
