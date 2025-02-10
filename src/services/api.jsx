@@ -5,7 +5,7 @@ const BASE_URL = 'https://pantrypal-backend.onrender.com';
 export const apiCall = async (url, options = {}, token = '') => {
   const headers = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,  // Directly use the passed token
+    Authorization: `Bearer ${token}`,
     ...options.headers,
   };
 
