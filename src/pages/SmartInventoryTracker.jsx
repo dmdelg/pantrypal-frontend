@@ -11,7 +11,7 @@ const SmartInventoryTracker = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('none');
   const [filteredGroceries, setFilteredGroceries] = useState([]);
-  const [filterByToday, setFilterByToday] = useState(false); // Added state for filtering expiring today
+  const [filterByToday, setFilterByToday] = useState(false); 
 
   // Fetch groceries data
   useEffect(() => {
@@ -106,7 +106,7 @@ const SmartInventoryTracker = () => {
       const response = await apiCall(`/groceries/name/${searchQuery}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setGroceries(response.data.groceries); // Store the data in groceries state
+      setGroceries(response.data.groceries); 
       setFilteredGroceries(response.data.groceries);
     } catch (error) {
       console.error("Error during search:", error);
@@ -178,7 +178,7 @@ const SmartInventoryTracker = () => {
         <input
           type="text"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)} // Fixed search query handler
+          onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by name"
         />
         <button type="submit">Search</button>
@@ -200,11 +200,11 @@ const SmartInventoryTracker = () => {
       </select>
 
       {/* Grocery List */}
-      {displayedGroceries.length === 0 ? (
+      {filteredGroceries.length === 0 ? (
         <p>No groceries found. Please search or add groceries.</p>
       ) : (
         <ul>
-          {displayedGroceries.map((grocery) => (
+          {filteredGroceries.map((grocery) => (
             <li key={grocery.id}>
               {updateGrocery.id === grocery.id ? (
                 <>
@@ -235,4 +235,10 @@ const SmartInventoryTracker = () => {
               )}
             </li>
           ))}
-   
+        </ul>
+      )}
+    </div>
+  );
+};
+
+export default SmartInventoryTracker;
