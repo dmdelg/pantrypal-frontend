@@ -25,11 +25,12 @@ const SignUp = () => {
         data: signUpData,
       });
 
-      if (response.message) {
+      const responseData = response.data;
+      if (responseData.message) {
         console.log('User registered successfully');
         navigate('/login'); 
       } else {
-        setError(response.details || 'Sign up failed');
+        setError(responseData.details || 'Sign up failed');
       }
     } catch (err) {
       console.error('Error during sign up:', err);

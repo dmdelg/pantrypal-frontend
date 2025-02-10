@@ -53,7 +53,7 @@ const SmartInventoryTracker = () => {
       });
 
       if (response.status === 201) {
-        setGroceries(prevGroceries => [...prevGroceries, response.data.grocery]);
+        setGroceries(prevGroceries => [...prevGroceries, response.grocery]);
         setNewGrocery({ name: '', quantity: '', expiration_date: '' });
       }
     } catch (error) {
@@ -92,9 +92,10 @@ const SmartInventoryTracker = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (response.status === 200) {
-        setGroceries((prevGroceries) => prevGroceries.filter(grocery => grocery.id !== id));
+      if (response.status < 200 || response.status >= 300) {
+        console.error('Error deleting grocery item:', response.data.message);
       }
+      setGroceries((prevGroceries) => prevGroceries.filter(grocery => grocery.id !== id));
     } catch (error) {
       console.error('Error deleting grocery item:', error);
     }
@@ -106,8 +107,9 @@ const SmartInventoryTracker = () => {
       const response = await apiCall(`/groceries/name/${searchQuery}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setGroceries(response.data.groceries); 
-      setFilteredGroceries(response.data.groceries);
+      const data = response.data;
+      setGroceries(data.groceries); 
+      setFilteredGroceries(data.groceries);
     } catch (error) {
       console.error("Error during search:", error);
     }

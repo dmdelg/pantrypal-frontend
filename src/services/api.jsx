@@ -15,11 +15,7 @@ export const apiCall = async (url, options = {}, token = '') => {
       headers,
     });
 
-    if (response.status < 200 || response.status >= 300) {
-      throw new Error('Something went wrong!');
-    }
-
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error during API call:', error);
     throw new Error(error.message || 'An unknown error occurred');

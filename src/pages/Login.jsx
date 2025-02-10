@@ -34,8 +34,7 @@ const Login = () => {
         data: loginData,
       });
       
-      const data = response;
-      
+      const data = response.data;
       if (data.token) {
         login(data.token);
         navigate('/profile');
