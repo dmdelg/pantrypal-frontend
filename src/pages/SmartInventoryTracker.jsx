@@ -10,9 +10,8 @@ const SmartInventoryTracker = () => {
   const [updateGrocery, setUpdateGrocery] = useState({ id: null, name: '', quantity: '', expiration_date: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('none');
-  const [filterByToday, setFilterByToday] = useState(false); 
+  const [filterByToday, setFilterByToday] = useState(false);
 
-  // Fetch groceries once when the component mounts
   useEffect(() => {
     const fetchGroceries = async () => {
       try {
@@ -36,9 +35,9 @@ const SmartInventoryTracker = () => {
     const newItem = {
       name: newGrocery.name,
       quantity: Number(newGrocery.quantity),
-      expiration_date: formatDate(newGrocery.expiration_date), 
+      expiration_date: formatDate(newGrocery.expiration_date),
     };
-    
+
     try {
       const response = await apiCall('/groceries', {
         method: 'POST',
@@ -70,7 +69,7 @@ const SmartInventoryTracker = () => {
       });
 
       if (response.status === 200) {
-        const updatedGrocery = response.data; 
+        const updatedGrocery = response.data;
         const updatedGroceryList = groceries.map(grocery =>
           grocery.id === updatedGrocery.id ? updatedGrocery : grocery
         );
@@ -93,28 +92,28 @@ const SmartInventoryTracker = () => {
     }
   };
 
-  const handleSearch = async (e) => {
+  const handleSearch = (e) => {
     setSearchQuery(e.target.value);
   };
 
-  const handleSearchSubmit = async (e) => {
-    e.preventDefault();  // Prevent form submission behavior
-    if (!searchQuery.trim()) return;  // Don't search if query is empty
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
   };
 
   const handleSort = (option) => {
     setSortOption(option);
   };
 
-  const handleFilterToday = () => {
+  const handleFilterToday = (e) => {
+    e.preventDefault(); // Prevent default behavior of button
     setFilterByToday(true);
   };
 
-  const handleResetFilter = () => {
+  const handleResetFilter = (e) => {
+    e.preventDefault(); // Prevent default behavior of button
     setFilterByToday(false);
   };
 
-  // Filter and Sort logic (front-end only)
   const filteredGroceries = groceries
     .filter(grocery => 
       (!filterByToday || formatDate(grocery.expiration_date) === format(new Date(), 'MM-dd-yyyy'))
