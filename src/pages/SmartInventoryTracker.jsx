@@ -67,11 +67,14 @@ const SmartInventoryTracker = () => {
       });
 
       if (response.status === 200) {
-        const updatedGrocery = response.data.grocery;
-        const updatedGroceryList = groceries.map(grocery =>
-          grocery.id === updatedGrocery.id ? updatedGrocery : grocery
-        );
-        setGroceries(updatedGroceryList);
+        // Fetch the updated grocery list after updating
+        const refreshedResponse = await apiCall('/groceries', {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+  
+        if (refreshedResponse.status === 200) {
+          setGroceries(refreshedResponse.data.groceries);
+        }
       }
     } catch (error) {
       console.error("Error updating grocery:", error);
