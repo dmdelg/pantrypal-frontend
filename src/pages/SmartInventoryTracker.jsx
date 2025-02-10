@@ -10,11 +10,12 @@ const SmartInventoryTracker = () => {
   const [updateGrocery, setUpdateGrocery] = useState({ id: null, name: '', quantity: '', expiration_date: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('none');
-  const [filterByToday, setFilterByToday] = useState(false);
+  const [filteredGroceries, setFilteredGroceries] = useState([]);
+  const [filterByToday, setFilterByToday] = useState(false); // Added state for filtering expiring today
 
   // Fetch groceries data
   useEffect(() => {
-    if (!token) return;  // Prevent API call if token is not available
+    if (!token) return;  
 
     const fetchGroceries = async () => {
       try {
@@ -99,17 +100,14 @@ const SmartInventoryTracker = () => {
     }
   };
 
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
   const handleSearchSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await apiCall(`/groceries/name/${searchQuery}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setGroceries(response.data.groceries);
+      setGroceries(response.data.groceries); // Store the data in groceries state
+      setFilteredGroceries(response.data.groceries);
     } catch (error) {
       console.error("Error during search:", error);
     }
@@ -124,7 +122,7 @@ const SmartInventoryTracker = () => {
   };
 
   // Filter and sort groceries
-  const filteredGroceries = groceries
+  const displayedGroceries = groceries
     .filter(grocery => 
       !filterByToday || formatDate(grocery.expiration_date) === format(new Date(), 'MM-dd-yyyy')
     )
@@ -180,7 +178,7 @@ const SmartInventoryTracker = () => {
         <input
           type="text"
           value={searchQuery}
-          onChange={handleSearch}
+          onChange={(e) => setSearchQuery(e.target.value)} // Fixed search query handler
           placeholder="Search by name"
         />
         <button type="submit">Search</button>
@@ -202,11 +200,11 @@ const SmartInventoryTracker = () => {
       </select>
 
       {/* Grocery List */}
-      {filteredGroceries.length === 0 ? (
+      {displayedGroceries.length === 0 ? (
         <p>No groceries found. Please search or add groceries.</p>
       ) : (
         <ul>
-          {filteredGroceries.map((grocery) => (
+          {displayedGroceries.map((grocery) => (
             <li key={grocery.id}>
               {updateGrocery.id === grocery.id ? (
                 <>
@@ -237,10 +235,4 @@ const SmartInventoryTracker = () => {
               )}
             </li>
           ))}
-        </ul>
-      )}
-    </div>
-  );
-};
-
-export default SmartInventoryTracker;
+   
