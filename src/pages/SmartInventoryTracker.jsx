@@ -188,7 +188,7 @@ const SmartInventoryTracker = () => {
         />
         <button type="submit">Add Grocery</button>
       </form>
-
+  
       <form onSubmit={handleSearchSubmit}>
         <input
           type="text"
@@ -198,27 +198,42 @@ const SmartInventoryTracker = () => {
         />
         <button type="submit">Search</button>
       </form>
-
+  
       <button onClick={handleShowAll}>Show All</button>
       <button onClick={() => setExpiringSoonGroceries(true)}>Expiring Soon</button>
       <button onClick={() => setExpiredGroceries(true)}>Expired Items</button>
-
+  
       <select onChange={handleSortChange} value={sortOption}>
         <option value="none">Sort By</option>
         <option value="name">Name</option>
         <option value="quantity">Quantity</option>
       </select>
-
+  
       <div>
         {groceries.map(grocery => (
           <div key={grocery.id}>
             <p>{grocery.name}</p>
             <p>Quantity: {grocery.quantity}</p>
             <p>Expiration Date: {formatDate(grocery.expiration_date)}</p>
+  
+            {/* Update Button */}
+            <button onClick={() => setUpdateGrocery({
+              id: grocery.id,
+              name: grocery.name,
+              quantity: grocery.quantity,
+              expiration_date: grocery.expiration_date,
+            })}>
+              Update
+            </button>
+  
+            {/* Delete Button */}
+            <button onClick={() => handleDelete(grocery.id)}>
+              Delete
+            </button>
           </div>
         ))}
       </div>
-
+  
       {expiringSoonGroceries.length > 0 && (
         <div>
           <h2>Expiring Soon</h2>
@@ -231,7 +246,7 @@ const SmartInventoryTracker = () => {
           </ul>
         </div>
       )}
-
+  
       {expiredGroceries.length > 0 && (
         <div>
           <h2>Expired Items</h2>
@@ -246,6 +261,4 @@ const SmartInventoryTracker = () => {
       )}
     </div>
   );
-};
-
-export default SmartInventoryTracker;
+  
