@@ -19,19 +19,18 @@ const SignUp = () => {
     try {
       const response = await apiCall('/auth/register', {
         method: 'POST',
-        data: signUpData,
+        data: signUpData,  
       });
-      
-      // Check if the registration was successful based on the response status
-      if (response.status >= 200 && response.status < 300) {
+
+      if (response?.status >= 200 && response?.status < 300) {
         console.log('User registered successfully');
         navigate('/login');
       } else {
-        setError(response.details || 'Sign up failed');
+        setError(response?.details || 'Sign up failed');
       }
     } catch (err) {
       console.error('Error during sign up:', err);
-      setError(err.message || 'An error occurred during sign up');
+      setError(err?.message || 'An error occurred during sign up');
     }
   };
 
