@@ -9,9 +9,9 @@ const SmartInventoryTracker = () => {
   const [newGrocery, setNewGrocery] = useState({ name: '', quantity: '', expiration_date: '' });
   const [updateGrocery, setUpdateGrocery] = useState({ id: null, name: '', quantity: '', expiration_date: '' });
   const [searchQuery, setSearchQuery] = useState('');
+  const [expiringSoonGroceries, setExpiringSoonGroceries] = useState([]);
+  const [expiredGroceries, setExpiredGroceries] = useState([]);
   const [sortOption, setSortOption] = useState('none');
-  const [filteredGroceries, setFilteredGroceries] = useState([]);
-  const [filterByToday, setFilterByToday] = useState(false); 
 
   // Fetch groceries data
   useEffect(() => {
@@ -114,133 +114,123 @@ const SmartInventoryTracker = () => {
       console.error("Error during search:", error);
     }
   };
+  useEffect(() => {
+    if (token) {
+      const fetchGroceries = async () => {
+        try {
+          const response = await apiCall('/check-expirations', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
-  const handleSort = (option) => {
-    setSortOption(option);
+          // Split response data into expiring soon and expired items
+          const expiringSoonItems = response.data.expiringSoonGroceries || [];
+          const expiredItems = response.data.expiredGroceries || [];
+
+          setExpiringSoonGroceries(expiringSoonItems);
+          setExpiredGroceries(expiredItems);
+        } catch (error) {
+          console.error('Error fetching groceries:', error);
+        }
+      };
+
+      fetchGroceries();
+    }
+  }, [token]);
+
+  // Handle Show All button click
+  const handleShowAll = () => {
+    fetchAllGroceries();  // Fetch all groceries
+    setSortOption('none'); // Reset sorting when showing all
   };
 
-  const handleFilterChange = (e) => {
-    setFilterByToday(e.target.value === "expiring_today");
+  // Fetch all groceries (to be used in the show all function)
+  const fetchAllGroceries = async () => {
+    try {
+      const response = await apiCall('/groceries', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setGroceries(response.data.groceries);
+    } catch (error) {
+      console.error('Error fetching groceries:', error);
+    }
   };
 
-  // Filter and sort groceries
-  const displayedGroceries = groceries
-    .filter(grocery => 
-      !filterByToday || formatDate(grocery.expiration_date) === format(new Date(), 'MM-dd-yyyy')
-    )
-    .filter(grocery => 
-      grocery.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => {
-      switch (sortOption) {
-        case 'name_asc':
-          return a.name.localeCompare(b.name);
-        case 'name_desc':
-          return b.name.localeCompare(a.name);
-        case 'quantity':
-          return a.quantity - b.quantity;
-        case 'expiration_date':
-          return new Date(a.expiration_date) - new Date(b.expiration_date);
-        default:
-          return 0;
-      }
-    });
+  // Handle sorting
+  const handleSortChange = (e) => {
+    const sortValue = e.target.value;
+    setSortOption(sortValue);
+
+    let sortedGroceries;
+    if (sortValue === 'name') {
+      sortedGroceries = [...groceries].sort((a, b) => a.name.localeCompare(b.name)); // Sort by name
+    } else if (sortValue === 'quantity') {
+      sortedGroceries = [...groceries].sort((a, b) => a.quantity - b.quantity); // Sort by quantity
+    } else {
+      sortedGroceries = [...groceries];
+    }
+
+    setGroceries(sortedGroceries);
+  };
+
 
   return (
     <div>
-      <h1>Smart Inventory Tracker</h1>
+      {/* Show All and Expiring Soon Buttons */}
+      <button onClick={handleShowAll}>Show All</button>
+      <button onClick={() => setExpiringSoonGroceries(true)}>Expiring Soon</button>
+      <button onClick={() => setExpiredGroceries(true)}>Expired Items</button>
 
-      {/* Create Grocery Form */}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={newGrocery.name}
-          onChange={(e) => setNewGrocery({ ...newGrocery, name: e.target.value })}
-          placeholder="Name"
-          required
-        />
-        <input
-          type="text"
-          value={newGrocery.quantity}
-          onChange={(e) => setNewGrocery({ ...newGrocery, quantity: e.target.value })}
-          placeholder="Quantity"
-          required
-        />
-        <input
-          type="date"
-          value={newGrocery.expiration_date}
-          onChange={(e) => setNewGrocery({ ...newGrocery, expiration_date: e.target.value })}
-          required
-        />
-        <button type="submit">Add Grocery</button>
-      </form>
+      {/* If Show All is selected, display Sort By Dropdown */}
+      {groceries.length > 0 && (
+        <div>
+          <select onChange={handleSortChange} value={sortOption}>
+            <option value="none">Sort By</option>
+            <option value="name">Name</option>
+            <option value="quantity">Quantity</option>
+          </select>
+        </div>
+      )}
 
-      {/* Search Section */}
-      <form onSubmit={handleSearchSubmit}>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search by name"
-        />
-        <button type="submit">Search</button>
-      </form>
+      {/* Display groceries */}
+      <div>
+        {groceries.map(grocery => (
+          <div key={grocery.id}>
+            <p>{grocery.name}</p>
+            <p>Quantity: {grocery.quantity}</p>
+            <p>Expiration Date: {formatDate(grocery.expiration_date)}</p>
+          </div>
+        ))}
+      </div>
 
-      {/* Sorting Dropdown */}
-      <select onChange={(e) => handleSort(e.target.value)} value={sortOption}>
-        <option value="none">Sort By</option>
-        <option value="name_asc">Name (A-Z)</option>
-        <option value="name_desc">Name (Z-A)</option>
-        <option value="quantity">Quantity</option>
-        <option value="expiration_date">Expiration Date</option>
-      </select>
+      {/* Displaying filtered expiring soon and expired groceries */}
+      {expiringSoonGroceries.length > 0 && (
+        <div>
+          <h2>Expiring Soon</h2>
+          <ul>
+            {expiringSoonGroceries.map(grocery => (
+              <li key={grocery.id}>
+                {grocery.name} - {grocery.quantity} - {grocery.expiration_date}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
-      {/* Filter Dropdown */}
-      <select onChange={handleFilterChange} value={filterByToday ? "expiring_today" : "show_all"}>
-        <option value="show_all">Show All</option>
-        <option value="expiring_today">Expiring Today</option>
-      </select>
-
-      {/* Grocery List */}
-      {filteredGroceries.length === 0 ? (
-        <p>No groceries found. Please search or add groceries.</p>
-      ) : (
-        <ul>
-          {filteredGroceries.map((grocery) => (
-            <li key={grocery.id}>
-              {updateGrocery.id === grocery.id ? (
-                <>
-                  <input
-                    type="text"
-                    value={updateGrocery.name}
-                    onChange={(e) => setUpdateGrocery({ ...updateGrocery, name: e.target.value })}
-                  />
-                  <input
-                    type="text"
-                    value={updateGrocery.quantity}
-                    onChange={(e) => setUpdateGrocery({ ...updateGrocery, quantity: e.target.value })}
-                  />
-                  <input
-                    type="date"
-                    value={updateGrocery.expiration_date}
-                    onChange={(e) => setUpdateGrocery({ ...updateGrocery, expiration_date: e.target.value })}
-                  />
-                  <button onClick={() => handleUpdate(grocery.id)}>Update</button>
-                  <button onClick={() => setUpdateGrocery({ id: null, name: '', quantity: '', expiration_date: '' })}>Cancel</button>
-                </>
-              ) : (
-                <>
-                  {grocery.name} - {grocery.quantity} - Expires on: {formatDate(grocery.expiration_date)}
-                  <button onClick={() => setUpdateGrocery({ id: grocery.id, ...grocery })}>Update</button>
-                  <button onClick={() => handleDelete(grocery.id)}>Delete</button>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
+      {expiredGroceries.length > 0 && (
+        <div>
+          <h2>Expired Items</h2>
+          <ul>
+            {expiredGroceries.map(grocery => (
+              <li key={grocery.id}>
+                {grocery.name} - {grocery.quantity} - {grocery.expiration_date}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
 };
 
 export default SmartInventoryTracker;
+ 
