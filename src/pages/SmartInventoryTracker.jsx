@@ -98,20 +98,16 @@ const SmartInventoryTracker = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    // You can send a search request to the backend here
+    console.log("Search query submitted:", searchQuery);
   };
 
   const handleSort = (option) => {
     setSortOption(option);
   };
 
-  const handleFilterToday = (e) => {
-    e.preventDefault(); // Prevent default behavior of button
-    setFilterByToday(true);
-  };
-
-  const handleResetFilter = (e) => {
-    e.preventDefault(); // Prevent default behavior of button
-    setFilterByToday(false);
+  const handleFilterChange = (e) => {
+    setFilterByToday(e.target.value === "expiring_today");
   };
 
   const filteredGroceries = groceries
@@ -173,6 +169,7 @@ const SmartInventoryTracker = () => {
           onChange={handleSearch}
           placeholder="Search by name"
         />
+        <button type="submit">Search</button>
       </form>
 
       {/* Sorting Dropdown */}
@@ -184,12 +181,11 @@ const SmartInventoryTracker = () => {
         <option value="expiration_date">Expiration Date</option>
       </select>
 
-      {/* Filter and Reset Buttons */}
-      <button onClick={handleFilterToday}>
-        {filterByToday ? "Show All" : "Show Expiring Today"}
-      </button>
-
-      <button onClick={handleResetFilter}>Reset Filter</button>
+      {/* Filter Dropdown */}
+      <select onChange={handleFilterChange} value={filterByToday ? "expiring_today" : "show_all"}>
+        <option value="show_all">Show All</option>
+        <option value="expiring_today">Expiring Today</option>
+      </select>
 
       {/* Grocery List */}
       {filteredGroceries.length === 0 && searchQuery === "" ? (
