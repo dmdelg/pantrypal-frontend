@@ -98,8 +98,12 @@ const SmartInventoryTracker = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    // You can send a search request to the backend here
-    console.log("Search query submitted:", searchQuery);
+    // Search functionality tied to the search route for grocery items by name
+    apiCall(`/groceries/name/${searchQuery}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(response => {
+      setGroceries(response.data.groceries);
+    }).catch(error => console.error("Error during search:", error));
   };
 
   const handleSort = (option) => {
@@ -107,7 +111,17 @@ const SmartInventoryTracker = () => {
   };
 
   const handleFilterChange = (e) => {
-    setFilterByToday(e.target.value === "expiring_today");
+    if (e.target.value === "expiring_today") {
+      setFilterByToday(true);
+      apiCall("/groceries/check-expirations", {
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch((error) => console.error("Error fetching expiring groceries:", error));
+    } else {
+      setFilterByToday(false);
+      apiCall("/groceries", {
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch((error) => console.error("Error fetching all groceries:", error));
+    }
   };
 
   const filteredGroceries = groceries
