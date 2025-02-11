@@ -1,21 +1,21 @@
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
 import './Profile.css';
 
 function Profile() {
   return (
     <div>
       <h2>My Profile</h2>
-      <ul className="profile-links">
-        <li>
-          <Link to="/smart-inventory">Smart Inventory Tracker</Link>
-        </li>
-        <li>
-        <Link to="/user-generated-recipe">User-Generated Recipe Entry</Link>
-        </li>
-        <li>
-          <Link to="/health-dashboard">Health Dashboard</Link>
-        </li>
-      </ul>
+      <div className="grid-container">
+        <Link to="/smart-inventory" className="grid-item">
+          <h3>Smart Inventory Tracker</h3>
+        </Link>
+        <Link to="/user-generated-recipe" className="grid-item">
+          <h3>User-Generated Recipe Entry</h3>
+        </Link>
+        <Link to="/health-dashboard" className="grid-item">
+          <h3>Health Dashboard</h3>
+        </Link>
+      </div>
     </div>
   );
 }

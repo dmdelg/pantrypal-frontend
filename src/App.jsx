@@ -5,11 +5,10 @@ import SignUp from './pages/SignUp';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import SmartInventoryTracker from './pages/SmartInventoryTracker';
-import RecipeEntry from './pages/UserGeneratedRecipeEntry';
+import MyRecipes from './pages/UserGeneratedRecipeEntry';
 import Navbar from './components/Navbar';
 import './App.css';
 import './index.css';
-import MyRecipes from './pages/UserGeneratedRecipeEntry';
 
 function App() {
   return (

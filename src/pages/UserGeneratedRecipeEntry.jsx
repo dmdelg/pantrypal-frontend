@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { apiCall } from "../services/api";
 
-const MyRecipes = () => {
+const RecipeManager = () => {
   const { token } = useAuth();
   const [recipes, setRecipes] = useState([]);
-  const [filteredRecipes, setFilteredRecipes] = useState([]);
-  const [recipe, setRecipe] = useState({
+  const [sortOption, setSortOption] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [updateRecipe, setUpdateRecipe] = useState({
+    id: null,
     title: '',
     ingredients: '',
     instructions: '',
@@ -15,179 +17,366 @@ const MyRecipes = () => {
     carbs: '',
     fat: ''
   });
-  const [editingId, setEditingId] = useState(null);
-  const [error, setError] = useState('');
-  const [showAllRecipes, setShowAllRecipes] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('name');
+  const [newRecipe, setNewRecipe] = useState({
+    title: '',
+    ingredients: '',
+    instructions: '',
+    calories: '',
+    protein: '',
+    carbs: '',
+    fat: ''
+  });
 
-  // Fetch user's recipes on demand
-  const fetchRecipes = async () => {
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    const recipeData = {
+      title: newRecipe.title,
+      ingredients: newRecipe.ingredients,
+      instructions: newRecipe.instructions,
+      calories: newRecipe.calories || 0,
+      protein: newRecipe.protein || 0,
+      carbs: newRecipe.carbs || 0,
+      fat: newRecipe.fat || 0
+    };
+
     try {
-      const response = await axios.get('/recipes', {
+      const response = await apiCall('/recipes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        data: recipeData,
+      });
+
+      if (response.status === 201) {
+        console.log("Recipe successfully added!", response.data.recipe);
+        setNewRecipe({
+          title: '',
+          ingredients: '',
+          instructions: '',
+          calories: '',
+          protein: '',
+          carbs: '',
+          fat: ''
+        });
+        setRecipes(prevRecipes => [...prevRecipes, response.data.recipe]);
+      }
+    } catch (error) {
+      console.error("Failed to add recipe", error);
+    }
+  };
+
+  const handleShowAllRecipes = async () => {
+    try {
+      const response = await apiCall('/recipes', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setRecipes(response.data.recipes);
-      setFilteredRecipes(response.data.recipes);
-    } catch (err) {
-      setError(`Error fetching recipes: ${err.message}`);
-      console.error('Error fetching recipes:', err);
+    } catch (error) {
+      console.error('Error fetching recipes:', error);
     }
   };
 
-  useEffect(() => {
-    fetchRecipes(); // Initial fetch
-  }, [token]);
-
-  // Search handler with debouncing
-  useEffect(() => {
-    const debounceSearch = setTimeout(() => {
-      const filtered = recipes.filter((recipe) =>
-        recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredRecipes(filtered);
-    }, 300); // 300ms debounce delay
-
-    return () => clearTimeout(debounceSearch);
-  }, [searchQuery, recipes]);
-
-  // Sort handler
-  useEffect(() => {
-    let sortedRecipes = [...filteredRecipes];
-    if (sortBy === 'name') {
-      sortedRecipes.sort((a, b) => a.title.localeCompare(b.title));
-    } else if (sortBy === 'date') {
-      sortedRecipes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    }
-    setFilteredRecipes(sortedRecipes);
-  }, [sortBy, filteredRecipes]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setRecipe((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (!recipe.title || !recipe.ingredients || !recipe.instructions) {
-      setError('Title, ingredients, and instructions are required.');
-      return;
-    }
+  const handleRecipeUpdate = async (id) => {
+    const updateRecipeData = {
+      title: updateRecipe.title,
+      ingredients: updateRecipe.ingredients,
+      instructions: updateRecipe.instructions,
+      calories: updateRecipe.calories || 0,
+      protein: updateRecipe.protein || 0,
+      carbs: updateRecipe.carbs || 0,
+      fat: updateRecipe.fat || 0
+    };
 
     try {
-      if (editingId) {
-        // Edit existing recipe
-        await axios.put(`/recipes/${editingId}`, recipe, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setEditingId(null);
-      } else {
-        // Create new recipe
-        await axios.post('/recipes', recipe, {
-          headers: { Authorization: `Bearer ${token}` },
+      const response = await apiCall(`/recipes/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        data: updateRecipeData,
+      });
+
+      if (response.status === 200) {
+        setRecipes(prevRecipes =>
+          prevRecipes.map(recipe =>
+            recipe.id === id ? response.data.recipe : recipe
+          )
+        );
+        setUpdateRecipe({
+          id: null,
+          title: '',
+          ingredients: '',
+          instructions: '',
+          calories: '',
+          protein: '',
+          carbs: '',
+          fat: ''
         });
       }
-
-      setRecipe({
-        title: '',
-        ingredients: '',
-        instructions: '',
-        calories: '',
-        protein: '',
-        carbs: '',
-        fat: ''
-      });
-      fetchRecipes(); // Refresh recipe list after save
-    } catch (err) {
-      setError('Error saving recipe.');
+    } catch (error) {
+      console.error("Failed to update recipe", error);
     }
   };
 
-  const handleEdit = (recipe) => {
-    setEditingId(recipe.id);
-    setRecipe(recipe); // Load recipe data into form for editing
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this recipe?')) return;
-
+  const handleDeleteRecipe = async (id) => {
     try {
-      await axios.delete(`/recipes/${id}`, {
+      const response = await apiCall(`/recipes/${id}`, {
+        method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      fetchRecipes(); // Refresh recipe list after deletion
-    } catch (err) {
-      setError(`Error deleting recipe: ${err.message}`);
-      console.error('Error deleting recipe:', err);
+
+      if (response.status < 200 || response.status >= 300) {
+        console.error('Error deleting recipe:', response.data.message);
+      }
+      setRecipes((prevRecipes) => prevRecipes.filter(recipe => recipe.id !== id));
+    } catch (error) {
+      console.error('Error deleting recipe:', error);
     }
+  };
+
+  const handleSortChangeRecipe = (e) => {
+    setSortOption(e.target.value);
+  };
+
+  const sortRecipes = () => {
+    let sortedRecipes = [...recipes];
+  
+    const [option, direction] = sortOption.split('-'); 
+
+    const sortOptions = {
+      title: (a, b) =>
+        direction === 'asc'
+          ? a.title.localeCompare(b.title)
+          : b.title.localeCompare(a.title),
+    };
+  
+    if (sortOptions[option]) {
+      sortedRecipes.sort(sortOptions[option]);
+    }
+  
+    return sortedRecipes;  
+  };
+
+  const handleSearch = (e) => {
+    const searchTerm = e.target.value; 
+    setSearchTerm(searchTerm); 
+  
+    if (searchTerm.trim()) { 
+      const filteredRecipes = recipes.filter(recipe =>
+        recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        recipe.ingredients.toLowerCase().includes(searchTerm.toLowerCase()) 
+      );
+      setRecipes(filteredRecipes); 
+    } 
+  };
+
+  const handleCancel = () => {
+    setSearchTerm('');
+    setSortOption('');
+    setNewRecipe({
+      title: '',
+      ingredients: '',
+      instructions: '',
+      calories: '',
+      protein: '',
+      carbs: '',
+      fat: ''
+    });
+    setUpdateRecipe({
+      id: null,
+      title: '',
+      ingredients: '',
+      instructions: '',
+      calories: '',
+      protein: '',
+      carbs: '',
+      fat: ''
+    });
+    setRecipes([]);
   };
 
   return (
     <div>
-      <h1>My Recipes</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {/* Form for creating a new recipe */}
+<form onSubmit={handleSubmit}>
+  <label>
+    Title:
+    <input
+      type="text"
+      value={newRecipe.title}
+      onChange={(e) => setNewRecipe({ ...newRecipe, title: e.target.value })}
+    />
+  </label>
+  <label>
+    Ingredients:
+    <input
+      type="text"
+      value={newRecipe.ingredients}
+      onChange={(e) => setNewRecipe({ ...newRecipe, ingredients: e.target.value })}
+    />
+  </label>
+  <label>
+    Instructions:
+    <input
+      type="text"
+      value={newRecipe.instructions}
+      onChange={(e) => setNewRecipe({ ...newRecipe, instructions: e.target.value })}
+    />
+  </label>
+  <label>
+    Calories:
+    <input
+      type="number"
+      value={newRecipe.calories}
+      onChange={(e) => setNewRecipe({ ...newRecipe, calories: e.target.value })}
+    />
+  </label>
+  <label>
+    Protein:
+    <input
+      type="number"
+      value={newRecipe.protein}
+      onChange={(e) => setNewRecipe({ ...newRecipe, protein: e.target.value })}
+    />
+  </label>
+  <label>
+    Carbs:
+    <input
+      type="number"
+      value={newRecipe.carbs}
+      onChange={(e) => setNewRecipe({ ...newRecipe, carbs: e.target.value })}
+    />
+  </label>
+  <label>
+    Fat:
+    <input
+      type="number"
+      value={newRecipe.fat}
+      onChange={(e) => setNewRecipe({ ...newRecipe, fat: e.target.value })}
+    />
+  </label>
+  <button type="submit">Add Recipe</button>
+</form>
 
-      {/* Search Input */}
+{/* Update Form (only visible when a recipe is selected for update) */}
+{updateRecipe.id && (
+  <form onSubmit={(e) => {
+    e.preventDefault();
+    handleRecipeUpdate(updateRecipe.id);  // Call the update function with the recipe ID
+  }}>
+    <label>
+      Title:
       <input
         type="text"
-        placeholder="Search recipes by name"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        value={updateRecipe.title}
+        onChange={(e) => setUpdateRecipe({ ...updateRecipe, title: e.target.value })}
       />
-      
-      {/* Sort Dropdown */}
-      <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-        <option value="name">Sort by Name</option>
-        <option value="date">Sort by Date</option>
-      </select>
+    </label>
+    <label>
+      Ingredients:
+      <input
+        type="text"
+        value={updateRecipe.ingredients}
+        onChange={(e) => setUpdateRecipe({ ...updateRecipe, ingredients: e.target.value })}
+      />
+    </label>
+    <label>
+      Instructions:
+      <input
+        type="text"
+        value={updateRecipe.instructions}
+        onChange={(e) => setUpdateRecipe({ ...updateRecipe, instructions: e.target.value })}
+      />
+    </label>
+    <label>
+      Calories:
+      <input
+        type="number"
+        value={updateRecipe.calories}
+        onChange={(e) => setUpdateRecipe({ ...updateRecipe, calories: e.target.value })}
+      />
+    </label>
+    <label>
+      Protein:
+      <input
+        type="number"
+        value={updateRecipe.protein}
+        onChange={(e) => setUpdateRecipe({ ...updateRecipe, protein: e.target.value })}
+      />
+    </label>
+    <label>
+      Carbs:
+      <input
+        type="number"
+        value={updateRecipe.carbs}
+        onChange={(e) => setUpdateRecipe({ ...updateRecipe, carbs: e.target.value })}
+      />
+    </label>
+    <label>
+      Fat:
+      <input
+        type="number"
+        value={updateRecipe.fat}
+        onChange={(e) => setUpdateRecipe({ ...updateRecipe, fat: e.target.value })}
+      />
+    </label>
+    <button type="submit">Update Recipe</button>
+  </form>
+)}
 
-      {/* See All Recipes Button */}
-      <button onClick={() => setShowAllRecipes((prev) => !prev)}>
-        {showAllRecipes ? 'Hide All Recipes' : 'See All Recipes'}
-      </button>
-
-      {/* Recipe Form */}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Recipe Name</label>
-          <input type="text" name="title" value={recipe.title} onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Ingredients</label>
-          <textarea name="ingredients" value={recipe.ingredients} onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Instructions</label>
-          <textarea name="instructions" value={recipe.instructions} onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Nutritional Info (Optional)</label>
-          <input type="number" name="calories" value={recipe.calories} onChange={handleChange} placeholder="Calories" />
-          <input type="number" name="protein" value={recipe.protein} onChange={handleChange} placeholder="Protein" />
-          <input type="number" name="carbs" value={recipe.carbs} onChange={handleChange} placeholder="Carbs" />
-          <input type="number" name="fat" value={recipe.fat} onChange={handleChange} placeholder="Fat" />
-        </div>
-        <button type="submit">{editingId ? 'Update Recipe' : 'Add Recipe'}</button>
+      {/* Search Form */}
+      <form>
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={handleSearch}
+          placeholder="Search for recipes..."
+        />
       </form>
+<button type="submit"onClick={handleSearch}>Search</button>
+<button type="button" onClick={handleCancel}>Cancel</button>
+<button onClick={handleShowAllRecipes}>Show All Recipes</button>
 
-      {/* Recipe List */}
-      <h2>Recipe List</h2>
-      {showAllRecipes && (
-        <ul>
-          {filteredRecipes.map((r) => (
-            <li key={r.id}>
-              <strong>{r.title}</strong>
-              <button onClick={() => handleEdit(r)}>Edit</button>
-              <button onClick={() => handleDelete(r.id)}>Delete</button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {!showAllRecipes && <p>Click "See All Recipes" to view your recipes.</p>}
+{/* Sort Recipes */}
+<select onChange={handleSortChangeRecipe} value={sortOption}>
+  <option value="none-asc">Sort By</option>
+  <option value="title-asc">Title (A-Z)</option>
+  <option value="title-desc">Title (Z-A)</option>
+</select>
+
+{/* Recipe List Display */}
+<div>
+  {sortRecipes().map(recipe => (
+    <div key={recipe.id}>
+      <p>{recipe.title}</p>
+  
+      {/* Update Button */}
+      <button onClick={() => setUpdateRecipe({
+        id: recipe.id,
+        title: recipe.title,
+        ingredients: recipe.ingredients,
+        instructions: recipe.instructions,
+        calories: recipe.calories,
+        protein: recipe.protein,
+        carbs: recipe.carbs,
+        fat: recipe.fat
+      })}>
+        Update
+      </button>
+  
+      {/* Delete Button */}
+      <button onClick={() => handleDeleteRecipe(recipe.id)}>
+        Delete
+      </button>
+    </div>
+  ))}
+</div>
     </div>
   );
 };
 
-export default MyRecipes;
+export default RecipeManager;

@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { apiCall } from "../services/api";
+import { format } from "date-fns";
 
 const SmartInventoryTracker = () => {
   const { token } = useAuth();
@@ -9,30 +9,20 @@ const SmartInventoryTracker = () => {
   const [newGrocery, setNewGrocery] = useState({ name: '', quantity: '', expiration_date: '' });
   const [updateGrocery, setUpdateGrocery] = useState({ id: null, name: '', quantity: '', expiration_date: '' });
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState('name-asc');
-
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchGroceries = async () => {
-      try {
-        const response = await apiCall('/groceries', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setGroceries(response.data.groceries);
-      } catch (error) {
-        console.error('Error fetching groceries:', error);
-      }
-    };
-    fetchGroceries();
-  }, [token]);
+  const [sortOption, setSortOption] = useState('');
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    const userInputDate = newGrocery.expiration_date;
+    const [year, month, day] = userInputDate.split('-').map(num => parseInt(num, 10));
+    const expiration_date = new Date(year, month - 1, day);    
+    const formattedDate = format(expiration_date, 'MM-dd-yyyy');
+    
     const newItem = {
       name: newGrocery.name,
       quantity: Number(newGrocery.quantity),
-      expiration_date: newGrocery.expiration_date,
+      expiration_date: formattedDate,
     };
 
     try {
@@ -46,16 +36,28 @@ const SmartInventoryTracker = () => {
       });
 
       if (response.status === 201) {
-        setGroceries(prevGroceries => [...prevGroceries, response.grocery]);
+        setGroceries(prevGroceries => [...prevGroceries, response.data.grocery]);
         setNewGrocery({ name: '', quantity: '', expiration_date: '' });
       }
     } catch (error) {
       console.error("Failed to add grocery item", error);
     }
   };
-
+  const handleSelectGroceryForUpdate = (grocery) => {
+    setUpdateGrocery({
+      id: grocery.id,
+      name: grocery.name,
+      quantity: grocery.quantity,
+      expiration_date: grocery.expiration_date,
+    });
+  };
   const handleUpdate = async (id) => {
-    const formattedExpirationDate = format(new Date(updateGrocery.expiration_date), 'MM-dd-yyyy');
+
+    const userInputDate = updateGrocery.expiration_date;
+    const [year, month, day] = userInputDate.split('-').map(num => parseInt(num, 10));
+    const expiration_date = new Date(year, month - 1, day);    
+    const formattedExpirationDate = format(expiration_date, 'MM-dd-yyyy');    
+
     try {
       const response = await apiCall(`/groceries/${id}`, {
         method: 'PUT',
@@ -67,19 +69,25 @@ const SmartInventoryTracker = () => {
       });
 
       if (response.status === 200) {
-        // Fetch the updated grocery list after updating
         const refreshedResponse = await apiCall('/groceries', {
           headers: { "Authorization": `Bearer ${token}` },
         });
-  
+
         if (refreshedResponse.status === 200) {
           setGroceries(refreshedResponse.data.groceries);
+          setUpdateGrocery({
+            id: null,
+            name: '',
+            quantity: '',
+            expiration_date: '',
+          });
         }
       }
     } catch (error) {
       console.error("Error updating grocery:", error);
     }
   };
+
 
   const handleDelete = async (id) => {
     try {
@@ -99,6 +107,8 @@ const SmartInventoryTracker = () => {
 
   const handleSearchSubmit = async (e) => {
     e.preventDefault();
+
+    setSearchQuery('');
     try {
       const response = await apiCall(`/groceries/name/${searchQuery}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -141,13 +151,20 @@ const SmartInventoryTracker = () => {
             const dateB = new Date(b.expiration_date);
             return direction === "asc" ? dateA - dateB : dateB - dateA;
         },
+        
     };
 
     if (sortOptions[option]) {
-        sortedGroceries.sort(sortOptions[option]); // Sort using the mapped function
+        sortedGroceries.sort(sortOptions[option]); 
     }
 
     return sortedGroceries;
+  };
+
+  const handleCancel = () => {
+    setSearchQuery('');
+    setSortOption('');
+    setGroceries('');
   };
   
   return (
@@ -187,7 +204,8 @@ const SmartInventoryTracker = () => {
         <button type="submit">Search</button>
       </form>
   
-      <button onClick={handleShowAll}>Show All</button>
+        <button onClick={handleShowAll}>Show All</button>
+        <button onClick={handleCancel}>Cancel</button>
   
       {/* Sorting Option Dropdown */}
       <select onChange={handleSortChange} value={sortOption}>
@@ -208,12 +226,7 @@ const SmartInventoryTracker = () => {
             <p>Expiration Date: {grocery.expiration_date}</p>
   
             {/* Update Button */}
-            <button onClick={() => setUpdateGrocery({
-              id: grocery.id,
-              name: grocery.name,
-              quantity: grocery.quantity,
-              expiration_date: grocery.expiration_date,
-            })}>
+            <button onClick={() => handleSelectGroceryForUpdate(grocery)}>
               Update
             </button>
   
@@ -267,3 +280,4 @@ const SmartInventoryTracker = () => {
 };
 
 export default SmartInventoryTracker;
+
