@@ -1,21 +1,77 @@
 import { Link } from 'react-router-dom';
 import './Profile.css';
+import { Card, Button, Row, Col } from 'react-bootstrap'; 
+import pantryInventory from '../assets/pantryinventory.jpg';
+import healthDashboard from '../assets/healthdashboard.jpg';
+import recipeEntry from '../assets/recipeentry.jpg';
 
 function Profile() {
   return (
     <div>
       <h2>My Profile</h2>
-      <div className="grid-container">
-        <Link to="/smart-inventory" className="grid-item">
-          <h3>Smart Inventory Tracker</h3>
-        </Link>
-        <Link to="/user-generated-recipe" className="grid-item">
-          <h3>User-Generated Recipe Entry</h3>
-        </Link>
-        <Link to="/health-dashboard" className="grid-item">
-          <h3>Health Dashboard</h3>
-        </Link>
-      </div>
+
+      {/* Product Cards Section */}
+      <Row className="mt-4">
+        {/* Smart Inventory Tracker Card */}
+        <Col xs={12} md={4}>
+          <Card className="mb-4">
+            <div className="card-img-container">
+              <Card.Img 
+                variant="top" 
+                src={pantryInventory} 
+                className="img-fluid custom-img" 
+              />
+            </div>
+            <Card.Body>
+              <Card.Title>Smart Inventory Tracker</Card.Title>
+              <Card.Text>
+                Track your pantry items and manage your inventory efficiently to reduce waste.
+              </Card.Text>
+              <Button variant="primary" as={Link} to="/smart-inventory">Start Tracking</Button>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        {/* User-Generated Recipe Entry Card */}
+        <Col xs={12} md={4}>
+          <Card className="mb-4">
+            <div className="card-img-container">
+              <Card.Img 
+                variant="top" 
+                src={recipeEntry}
+                className="img-fluid custom-img" 
+              />
+            </div>
+            <Card.Body>
+              <Card.Title>User-Generated Recipe Entry</Card.Title>
+              <Card.Text>
+                Share and save your own recipes, keeping your cooking fresh and healthy.
+              </Card.Text>
+              <Button variant="primary" as={Link} to="/user-generated-recipe">Add to Cookbook</Button>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        {/* Health Dashboard Card */}
+        <Col xs={12} md={4}>
+          <Card className="mb-4">
+            <div className="card-img-container">
+              <Card.Img 
+                variant="top" 
+                src={healthDashboard} 
+                className="img-fluid custom-img" 
+              />
+            </div>
+            <Card.Body>
+              <Card.Title>Health Dashboard</Card.Title>
+              <Card.Text>
+                Track your daily nutrition and wellness goals, ensuring you stay on track.
+              </Card.Text>
+              <Button variant="primary" as={Link} to="/health-dashboard">View Dashboard</Button>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 }

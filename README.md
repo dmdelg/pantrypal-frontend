@@ -1,8 +1,31 @@
-# React + Vite
+**# PantryPal Frontend**
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Overview
+The PantryPal frontend is a React-based user interface that allows users to manage their groceries, receive recipe suggestions, and track food expiration.
 
-Currently, two official plugins are available:
+## 🛠️ Technologies
+- React + Vite
+- Bootstrap
+- Context API (state management)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 📦 Installation
+
+### 1️⃣ Navigate to the Frontend Folder
+```
+cd PantryPal/frontend
+```
+
+### 2️⃣ Install Dependencies
+```bash
+npm install
+```
+
+### 3️⃣ Start the Development Server
+```
+npm run dev
+```
+
+## 📡 Features
+- **Intuitive UI** for grocery tracking
+- **Real-time expiration alerts**
+- **Health dashboard for insights**

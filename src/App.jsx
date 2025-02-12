@@ -9,6 +9,8 @@ import MyRecipes from './pages/UserGeneratedRecipeEntry';
 import Navbar from './components/Navbar';
 import './App.css';
 import './index.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
 
 function App() {
   return (
