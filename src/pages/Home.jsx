@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button, Container, Row, Col } from 'react-bootstrap';
+import '../index.css';
+import './home.css';
 import groceriesImage from '../assets/groceries.jpg'
 import groceriesListImage from '../assets/grocerieslist.jpg'
 import pantryImage from '../assets/pantry.jpg'
-import '../index.css';
-import './home.css';
+
 
 
 const Home = () => {
