@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import './Profile.css';
 import { Card, Button, Row, Col } from 'react-bootstrap'; 
 import pantryInventory from '../assets/pantryinventory.jpg';
-import healthDashboard from '../assets/healthdashboard.jpg';
 import recipeEntry from '../assets/recipeentry.jpg';
 
 function Profile() {
@@ -48,26 +47,6 @@ function Profile() {
                 Share and save your own recipes, keeping your cooking fresh and healthy.
               </Card.Text>
               <Button variant="primary" as={Link} to="/user-generated-recipe">Add to Cookbook</Button>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        {/* Health Dashboard Card */}
-        <Col xs={12} md={4}>
-          <Card className="mb-4">
-            <div className="card-img-container">
-              <Card.Img 
-                variant="top" 
-                src={healthDashboard} 
-                className="img-fluid custom-img" 
-              />
-            </div>
-            <Card.Body>
-              <Card.Title>Health Dashboard</Card.Title>
-              <Card.Text>
-                Track your daily nutrition and wellness goals, ensuring you stay on track.
-              </Card.Text>
-              <Button variant="primary" as={Link} to="/health-dashboard">View Dashboard</Button>
             </Card.Body>
           </Card>
         </Col>
